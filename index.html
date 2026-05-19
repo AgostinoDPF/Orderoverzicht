@@ -1500,6 +1500,17 @@ function loadStorage(){
   try{cpContainers=JSON.parse(localStorage.getItem('dp5_cpcon')||'[]');}catch(e){cpContainers=[];}
   try{klantGroepen=JSON.parse(localStorage.getItem('dp5_kgrp')||'[]');}catch(e){klantGroepen=[];}
   try{cpArchivedContainers=JSON.parse(localStorage.getItem('dp5_cparch')||'[]');}catch(e){cpArchivedContainers=[];}
+  // Orders (allData) — was vroeger NIET bewaard. Nu wel, met Date-herstel
+  // op de _raw datumvelden zodat sorteren/marges blijven werken.
+  try{
+    var raw = JSON.parse(localStorage.getItem('dp5_data')||'[]');
+    allData = raw.map(function(r){
+      ['_eta_raw','_lev_raw','_etd_raw','_losdate'].forEach(function(k){
+        if(r[k]) r[k] = pD(r[k]);
+      });
+      return r;
+    });
+  }catch(e){ allData=[]; }
   if(!klantGroepen.length){
     // Standaard: AS Watson groep
     klantGroepen=[{naam:'AS Watson',klanten:['Kruidvat','Trekpleister','ICI Paris XL','Sacha','AS Watson'],telaat:-7,krap:0}];
@@ -1515,6 +1526,12 @@ function _saveStorageCore(){
   try{localStorage.setItem('dp5_cpcon',JSON.stringify(cpContainers));}catch(e){}
   try{localStorage.setItem('dp5_kgrp',JSON.stringify(klantGroepen));}catch(e){}
   try{localStorage.setItem('dp5_cparch',JSON.stringify(cpArchivedContainers));}catch(e){}
+  // Orders: bewaar zodat refresh / heropenen van de link de data houdt.
+  try{localStorage.setItem('dp5_data',JSON.stringify(allData));}catch(e){
+    // Bij QuotaExceededError: data is te groot voor localStorage.
+    // Log stil — andere keys zijn al opgeslagen.
+    console.warn('[saveStorage] dp5_data kon niet bewaard worden:', e && e.name);
+  }
 }
 // Globale flags voor GitHub-sync. Worden gelezen door ghSyncNow / ghApplyRemote.
 window._localDirty   = false;   // lokaal gewijzigd sinds laatste succesvolle push
@@ -1703,6 +1720,9 @@ function processData(rows,fname){
     }
   });
   if(nieuw>0)saveStorage();
+  // Bewaar de net-geïmporteerde orders zodat ze een refresh / herstart
+  // overleven en gesynct kunnen worden naar GitHub.
+  saveStorage();
 
   selIdx.clear();
   document.getElementById('topbar-status').textContent='Geladen: '+fname+(archived?' | '+archived+' gearchiveerd':'')+(nieuw?' | '+nieuw+' containers toegevoegd':'');
@@ -3229,6 +3249,32 @@ function recomputeAllStatus(){
 (function init(){
   // Default tab = Home
   showTab('home',document.getElementById('nav-home'));
+  // Als er via localStorage / GitHub-sync al orders geladen zijn,
+  // direct de hoofdweergave + dropdowns vullen — anders blijft het
+  // overzicht leeg tot een nieuwe XLSX-import.
+  if(allData.length){
+    allData.forEach(function(r){
+      // Reconstructeer afgeleide velden die niet in localStorage staan.
+      var boot=String(r['Boot']||'').trim();
+      var oi=origETAs[boot]||'';
+      r._orig_iso=oi; r._orig_fmt=oi?fmtD(oi):'';
+      var o2=pD(oi);
+      r._delay=(o2&&r._eta_raw)?Math.round((r._eta_raw-o2)/86400000):null;
+      var ld=calcLos(r._eta_raw,boot);
+      r._losdate=ld; r._losdate_fmt=ld?fmtD(ld):'';
+      r._days_until=daysUntil(r._eta_raw);
+      var meta=orderMeta[r._key]||{};
+      r._comment=meta.comment||r._comment||'';
+      r._prio=meta.prio||r._prio||'';
+      r._hidden=meta.hidden||r._hidden||false;
+      r.dagenverschil=calcDagen(r._eta_raw,r._lev_raw);
+      r.status=calcSt(r.dagenverschil,r['Klantnaam']);
+      r.status_order=STO[r.status];
+    });
+    populateDDs(); populateCPBootSelect(); render(); renderArchief();
+    ['nav-pub','nav-xl','nav-pdf'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='flex';});
+    var tb=document.getElementById('trial-banner');if(tb)tb.style.display='none';
+  }
   renderStats();renderHome();updateArchBadge();
 })();
 
@@ -3417,7 +3463,7 @@ const GH_DATA_PATH  = 'data/planner.json';
 // Metadata-sleutels die via GitHub gesynchroniseerd worden.
 // allData (orders) komt altijd uit Excel en wordt NOOIT via GitHub overschreven.
 const GH_SYNC_KEYS = ['dp5_orig','dp5_meta','dp5_bcom','dp5_blos',
-                       'dp5_arch','dp5_cpcon','dp5_kgrp','dp5_cparch'];
+                       'dp5_arch','dp5_cpcon','dp5_kgrp','dp5_cparch','dp5_data'];
 
 // ── Config ───────────────────────────────────────────────────────
 function ghGetConfig(){
@@ -3510,6 +3556,26 @@ function ghApplyRemote(d){
     });
   // Herlaad variabelen vanuit localStorage
   if(typeof loadStorage === 'function') loadStorage();
+  // Reconstrueer afgeleide velden voor orders die net uit GitHub kwamen.
+  if(allData && allData.length){
+    allData.forEach(function(r){
+      var boot=String(r['Boot']||'').trim();
+      var oi=origETAs[boot]||'';
+      r._orig_iso=oi; r._orig_fmt=oi?fmtD(oi):'';
+      var o2=pD(oi);
+      r._delay=(o2&&r._eta_raw)?Math.round((r._eta_raw-o2)/86400000):null;
+      var ld=calcLos(r._eta_raw,boot);
+      r._losdate=ld; r._losdate_fmt=ld?fmtD(ld):'';
+      r._days_until=daysUntil(r._eta_raw);
+      r.dagenverschil=calcDagen(r._eta_raw,r._lev_raw);
+      r.status=calcSt(r.dagenverschil,r['Klantnaam']);
+      r.status_order=STO[r.status];
+    });
+    if(typeof populateDDs === 'function') populateDDs();
+    if(typeof populateCPBootSelect === 'function') populateCPBootSelect();
+    ['nav-pub','nav-xl','nav-pdf'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='flex';});
+    var tb=document.getElementById('trial-banner');if(tb)tb.style.display='none';
+  }
   // Herrender — allData is ongewijzigd, render gebruikt het gewoon opnieuw
   if(typeof renderStats     === 'function') renderStats();
   if(typeof render          === 'function') render();
