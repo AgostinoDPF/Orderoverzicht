@@ -1561,6 +1561,10 @@ function pD(v){
   if(!v)return null;
   if(v instanceof Date&&!isNaN(v))return v;
   var s=String(v).trim();
+  // ISO datetime (van JSON.stringify(new Date())) — bv. "2024-06-15T22:00:00.000Z"
+  // Pak alleen het datumdeel zodat we lokaal middernacht krijgen, niet UTC.
+  var miso=s.match(/^(\d{4})-(\d{2})-(\d{2})T/);
+  if(miso)return new Date(+miso[1],+miso[2]-1,+miso[3]);
   // ISO / YYYY-MM-DD — parse as LOCAL date to avoid UTC midnight shift
   var m1=s.match(/^(\d{4})[-\/\.](\d{1,2})[-\/\.](\d{1,2})$/);
   if(m1)return new Date(+m1[1],+m1[2]-1,+m1[3]);
