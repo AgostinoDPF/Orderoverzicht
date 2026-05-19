@@ -2562,10 +2562,10 @@ function cpExportDocklay(){
     if(!confirm(msg))return;
   }
 
-  // Helper: DD-MM-JJJJ
+  // Helper: dd-m-JJJJ (dag met voorloop-nul, maand zonder)
   function fmtNL(dStr){
     var d=pD(dStr);if(!d)return '';
-    return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear();
+    return String(d.getDate()).padStart(2,'0')+'-'+(d.getMonth()+1)+'-'+d.getFullYear();
   }
 
   // Kolomvolgorde exact volgens Docklay template
@@ -2596,7 +2596,7 @@ function cpExportDocklay(){
       '',                      // Notities (leeg \u2014 gebruiker vult zelf)
       '',                      // Positie (leeg \u2014 gebruiker vult zelf)
       dType,                   // Container type (uit CP)
-      'LOSSEN',                // Taaktype (standaard)
+      'LOSSEN_SEALEN',         // Taaktype (standaard)
       c.container||'',         // Containernummer
       'Standaard',             // Prijsgroep (standaard)
       orderCnt,                // SKU = aantal orders in container (verplicht)
