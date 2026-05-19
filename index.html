@@ -808,6 +808,15 @@ input[type=checkbox]{width:15px;height:15px;accent-color:var(--accent);cursor:po
 .cp-add-row button:hover{text-decoration:underline;}
 .cp-sumbar{background:var(--bg2);padding:10px 22px;display:flex;gap:24px;border-top:1px solid var(--border);font-size:12.5px;color:var(--text3);flex-shrink:0;}
 .cp-sv{color:var(--text);font-weight:600;margin-left:4px;}
+.cp-expbar{background:var(--accent-soft);border-top:1px solid var(--accent-soft2);padding:10px 22px;display:none;align-items:center;gap:12px;font-size:13px;color:var(--accent);flex-shrink:0;}
+.cp-expbar.vis{display:flex;}
+.cp-expbar .grow{flex:1;}
+.cp-expbar .btn-exp{background:var(--accent);color:#fff;border:none;padding:7px 14px;border-radius:6px;font-family:var(--font);font-weight:600;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+.cp-expbar .btn-exp:hover{filter:brightness(.95);}
+.cp-expbar .btn-ghost{background:transparent;color:var(--accent);border:1px solid var(--accent-soft2);padding:6px 12px;border-radius:6px;font-family:var(--font);font-size:12px;cursor:pointer;}
+.cp-expbar .btn-ghost:hover{background:#fff;}
+.cp-chk{accent-color:var(--accent);width:14px;height:14px;cursor:pointer;vertical-align:middle;}
+.cp-chk-th{display:flex;align-items:center;justify-content:center;}
 
 /* ── MODAL ─────────────────────────────────── */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(26,31,46,.45);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
@@ -1337,6 +1346,15 @@ sectie                            ║
       <div class="content" id="cp-content">
         <div class="empty">Voeg containers toe via de + knop</div>
       </div>
+      <div class="cp-expbar" id="cp-expbar">
+        <span><strong id="cp-expcount">0</strong> container(s) geselecteerd voor Docklay</span>
+        <button class="btn-ghost" onclick="cpClearSel()">Selectie wissen</button>
+        <div class="grow"></div>
+        <button class="btn-exp" onclick="cpExportDocklay()" title="Exporteer als opdrachten-import voor Docklay">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export Docklay (.xlsx)
+        </button>
+      </div>
       <div class="cp-sumbar" id="cp-sumbar" style="display:none;">
         <span>Containers:<span class="cp-sv" id="cps-tot">0</span></span>
         <span>Dozen:<span class="cp-sv" id="cps-doz">0</span></span>
@@ -1485,6 +1503,7 @@ var SC='status_order',SA=true,showHidden=false,selIdx=new Set();
 var STO={'te-laat':0,'krap':1,'op-schema':2,'onbekend':3};
 var origETAs={},orderMeta={},boatComments={},boatLos={},archivedOrders={};
 var cpContainers=[];
+var cpSelContainers=new Set(); // containernummers aangevinkt voor Docklay-export
 var cpFilterMode='all',cpEditIdx=-1,cpSpoedVal=false;
 var curTab='home',origBoot='';
 var klantGroepen=[],autosaveTimer=null,lastAutoSave=null;
@@ -2189,6 +2208,17 @@ function getDelayForBoot(bootName){
 }
 
 // ── CP inline field update ──
+// Mapping helper: leid Docklay-containertype af uit Sumatra Display-tekst.
+function cpAutoDocklayType(sumatraType){
+  var t=String(sumatraType||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(t==='40HQ'||t==='40HC'||t==='40HCFT'||t==='40FTHC')return '40_FT_HC';
+  if(t==='40FT'||t==='40')return '40_FT';
+  if(t==='20FT'||t==='20')return '20_FT';
+  if(t==='TRUCK'||t==='WW'||t==='WAGEN')return 'TRUCK';
+  if(t==='LCL')return 'LCL';
+  return '';
+}
+var DOCKLAY_TYPES=['20_FT','40_FT','40_FT_HC','TRUCK','LCL'];
 function cpUpdateField(idx,field,val){
   if(idx<0||idx>=cpContainers.length)return;
   cpContainers[idx][field]=val;
@@ -2330,8 +2360,10 @@ function renderCP(){
         +'</div>'
         +'<div class="cp-tbl" id="'+bId+'">'
         +'<table><thead><tr>'
+        +'<th style="width:30px;" class="cp-chk-th"><input type="checkbox" class="cp-chk" '+(bContainers.every(function(x){return cpSelContainers.has(x.container);})?'checked':'')+' onclick="cpToggleBoatSel(this,\''+bootName.replace(/'/g,'&apos;')+'\',\''+wk.replace(/[^a-zA-Z0-9]/g,'_')+'\')" title="Selecteer alle containers van deze boot"></th>'
         +'<th style="width:115px;">Container</th>'
         +'<th style="width:60px;">Type</th>'
+        +'<th style="width:100px;">Type Docklay</th>'
         +'<th style="width:85px;">Forwarder</th>'
         +'<th style="width:200px;">Losdatum &amp; tijd</th>'
         +'<th style="width:36px;">Dag</th>'
@@ -2422,8 +2454,15 @@ function renderCP(){
           +'</div>';
 
         h+='<tr class="'+rowCls+'">'
+          +'<td class="cp-chk-th"><input type="checkbox" class="cp-chk" '+(cpSelContainers.has(c.container)?'checked':'')+' onclick="cpToggleSel(\''+c.container.replace(/'/g,'&apos;')+'\')"></td>'
           +'<td>'+spoedDot+'<span style="color:var(--text);font-weight:500;">'+c.container+'</span></td>'
           +'<td><span class="badge b-type">'+c.type+'</span></td>'
+          +'<td>'+(function(){
+              var cur=c.docklayType||cpAutoDocklayType(c.type);
+              var opts='<option value="">—</option>';
+              DOCKLAY_TYPES.forEach(function(t){opts+='<option value="'+t+'"'+(cur===t?' selected':'')+'>'+t+'</option>';});
+              return '<select class="cp-num" style="width:92px;" onchange="cpUpdateField('+cidx+',\'docklayType\',this.value)" title="Containertype voor Docklay">'+opts+'</select>';
+            })()+'</td>'
           +'<td><span class="badge b-fwd">'+(c.forwarder||'—')+'</span></td>'
           +'<td><div style="display:flex;align-items:center;gap:6px;">'
           +'<button class="dp-trigger'+(c.datum?'':' empty')+'" onclick="openCPDatumPicker(this,'+cidx+')">'
@@ -2456,10 +2495,135 @@ function renderCP(){
   });
 
   content.innerHTML=h;
+  cpUpdateExportBar();
   // Als archief-modus: toon gelost containers
   if(cpFilterMode==='arch'){
     renderCPArchiefInline(content);
   }
+}
+
+// ── Container selectie voor Docklay export ──
+function cpUpdateExportBar(){
+  var bar=document.getElementById('cp-expbar');var cnt=document.getElementById('cp-expcount');
+  if(!bar||!cnt)return;
+  var n=cpSelContainers.size;
+  cnt.textContent=n;
+  bar.className=n>0?'cp-expbar vis':'cp-expbar';
+}
+function cpToggleSel(contNr){
+  if(cpSelContainers.has(contNr))cpSelContainers.delete(contNr);
+  else cpSelContainers.add(contNr);
+  cpUpdateExportBar();
+  // Update select-all checkboxes in headers (sync state)
+  document.querySelectorAll('#cp-content thead .cp-chk').forEach(function(cb){cb.indeterminate=false;});
+  // Lichtgewicht: triggert re-render alleen voor selectie-state via her-render
+  // Voorkom volledige re-render om scroll & inputfocus te bewaren — sync alleen het vakje.
+  // (De select-all checkbox kan tijdelijk uit sync zijn, maar wordt bij volgende render correct.)
+}
+function cpToggleBoatSel(checkbox,bootName,wkKey){
+  // Verzamel alle containers van deze boot+week
+  var doSelect=checkbox.checked;
+  cpContainers.forEach(function(c){
+    if((c.boot||'Onbekende boot')!==bootName)return;
+    var d=pD(c.datum);
+    var key='onbekend';
+    if(d){var w=getWeekNum(d),y=d.getFullYear();key=y+'-W'+String(w).padStart(2,'0');}
+    if(key.replace(/[^a-zA-Z0-9]/g,'_')!==wkKey)return;
+    if(doSelect)cpSelContainers.add(c.container);
+    else cpSelContainers.delete(c.container);
+  });
+  cpUpdateExportBar();
+  renderCP();
+}
+function cpClearSel(){cpSelContainers.clear();cpUpdateExportBar();renderCP();}
+
+// ── Export naar Docklay (.xlsx) ──
+function cpExportDocklay(){
+  if(cpSelContainers.size===0){alert('Geen containers geselecteerd.');return;}
+  // Verzamel containers in dezelfde volgorde als ze in cpContainers staan
+  var selected=cpContainers.filter(function(c){return cpSelContainers.has(c.container);});
+  if(!selected.length){alert('Geselecteerde containers niet gevonden.');return;}
+
+  // Helper: DD-MM-JJJJ
+  function fmtNL(dStr){
+    var d=pD(dStr);if(!d)return '';
+    return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear();
+  }
+
+  // Kolomvolgorde exact volgens Docklay template
+  var headers=['Bedrijfsnaam','Locatie','Werkdatum','Starttijd','Eindtijd','Type','Factuurgroep','Notities','Positie','Container type','Taaktype','Containernummer','Prijsgroep','SKU','Colli','Tonnage'];
+  var rows=[headers];
+
+  selected.forEach(function(c){
+    var sd=getSumatraDataForContainer(c.container);
+    var dozHandmatig=c.dozen!==''&&c.dozen!==null&&c.dozen!==undefined;
+    var colli=dozHandmatig?parseInt(c.dozen||0):sd.dozen;
+    // SKU: aantal orders (rijen in Sumatra) voor deze container
+    var contNr=c.container;
+    var orderCnt=0;
+    allData.forEach(function(r){if(String(r['Container']||'').trim()===contNr)orderCnt++;});
+    // Containertype voor Docklay (vrije keuze in CP; fallback op auto-mapping)
+    var dType=c.docklayType||cpAutoDocklayType(c.type)||'';
+    rows.push([
+      'D.P. Factory',          // Bedrijfsnaam (standaard)
+      'DP Lingewei',           // Locatie (standaard)
+      fmtNL(c.datum),          // Werkdatum
+      c.tijd||'',              // Starttijd
+      '',                      // Eindtijd (leeg)
+      'CONTAINER',             // Type (standaard)
+      'Standaard',             // Factuurgroep (standaard)
+      '',                      // Notities (leeg \u2014 gebruiker vult zelf)
+      '',                      // Positie (leeg \u2014 gebruiker vult zelf)
+      dType,                   // Container type (uit CP)
+      'LOSSEN',                // Taaktype (standaard)
+      c.container||'',         // Containernummer
+      'Standaard',             // Prijsgroep (standaard)
+      orderCnt||'',            // SKU = aantal orders in container
+      colli||'',               // Colli (dozen)
+      ''                       // Tonnage (leeg \u2014 gebruiker vult zelf)
+    ]);
+  });
+
+  var wb=XLSX.utils.book_new();
+  var ws=XLSX.utils.aoa_to_sheet(rows);
+  // Kolombreedtes
+  ws['!cols']=[14,16,12,10,10,12,14,18,18,14,10,16,12,18,8,10].map(function(w){return{wch:w};});
+  XLSX.utils.book_append_sheet(wb,ws,'Opdrachten');
+
+  // Referentietabbladen meegeven (identiek aan template) zodat het bestand
+  // 1-op-1 voldoet aan wat Docklay verwacht.
+  var refs=[
+    {name:'Instructies',rows:[
+      ['OPDRACHTEN IMPORT — DP Factory Planner export'],
+      [''],
+      ['Dit bestand is automatisch gegenereerd door de DP Factory Planner.'],
+      ['Vul vóór import nog handmatig in: Notities, Positie, Container type, Tonnage.'],
+      [''],
+      ['Datumnotatie: DD-MM-JJJJ. Tijdnotatie: UU:MM.']
+    ]},
+    {name:'Bedrijven',rows:[['Bedrijfsnaam'],['D.P. Factory']]},
+    {name:'Locaties',rows:[
+      ['Bedrijfsnaam','Locatienaam'],
+      ['D.P. Factory','DP Lingewei'],
+      ['D.P. Factory','D.P. Edisonstraat'],
+      ['D.P. Factory','Oudewei'],
+      ['D.P. Factory','Smalle ZIjde'],
+      ['D.P. Factory','MIDL']
+    ]},
+    {name:'Factuurgroepen',rows:[['Bedrijfsnaam','Factuurgroep'],['D.P. Factory','Standaard']]},
+    {name:'Posities',rows:[['Bedrijfsnaam','Positienaam'],['D.P. Factory','Magazijn medewerker']]},
+    {name:'Container Prijsgroepen',rows:[['Bedrijfsnaam','Prijsgroepnaam'],['D.P. Factory','Standaard']]}
+  ];
+  refs.forEach(function(s){
+    var sws=XLSX.utils.aoa_to_sheet(s.rows);
+    XLSX.utils.book_append_sheet(wb,sws,s.name);
+  });
+
+  // Bestandsnaam met datum
+  var n=new Date();
+  var fname='Docklay_opdrachten_'+n.getFullYear()+String(n.getMonth()+1).padStart(2,'0')+String(n.getDate()).padStart(2,'0')+'_'+String(n.getHours()).padStart(2,'0')+String(n.getMinutes()).padStart(2,'0')+'.xlsx';
+  XLSX.writeFile(wb,fname);
+  showNotif('&#10003; '+selected.length+' container(s) ge\u00ebxporteerd naar Docklay');
 }
 
 function toggleWeek(id){var el=document.getElementById(id);var chev=document.getElementById('chev-'+id);if(!el)return;var open=el.style.display!=='none';el.style.display=open?'none':'block';if(chev)chev.style.transform=open?'rotate(-90deg)':'rotate(0deg)';}
