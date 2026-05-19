@@ -2218,7 +2218,7 @@ function cpAutoDocklayType(sumatraType){
   if(t==='LCL')return 'LCL';
   return '';
 }
-var DOCKLAY_TYPES=['20_FT','40_FT','40_FT_HC','TRUCK','LCL'];
+var DOCKLAY_TYPES=['20_FT','40_FT','40_FT_HC','TRUCK'];
 function cpUpdateField(idx,field,val){
   if(idx<0||idx>=cpContainers.length)return;
   cpContainers[idx][field]=val;
@@ -2544,6 +2544,24 @@ function cpExportDocklay(){
   var selected=cpContainers.filter(function(c){return cpSelContainers.has(c.container);});
   if(!selected.length){alert('Geselecteerde containers niet gevonden.');return;}
 
+  // ── Valideer verplichte velden vóór export ──
+  // Docklay weigert rijen zonder Werkdatum / Starttijd / Container type / Containernummer.
+  var missing=[];
+  selected.forEach(function(c){
+    var probs=[];
+    if(!c.datum)probs.push('losdatum');
+    if(!c.tijd)probs.push('lostijd');
+    var dt=c.docklayType||cpAutoDocklayType(c.type)||'';
+    if(DOCKLAY_TYPES.indexOf(dt)===-1)probs.push('Type Docklay');
+    if(!c.container)probs.push('containernr');
+    if(probs.length)missing.push(c.container+' \u2192 '+probs.join(', '));
+  });
+  if(missing.length){
+    var msg='De volgende containers missen verplichte velden:\n\n'+missing.join('\n')
+      +'\n\nVul deze in vóór exporteren, anders weigert Docklay de import. Toch doorgaan?';
+    if(!confirm(msg))return;
+  }
+
   // Helper: DD-MM-JJJJ
   function fmtNL(dStr){
     var d=pD(dStr);if(!d)return '';
@@ -2558,12 +2576,15 @@ function cpExportDocklay(){
     var sd=getSumatraDataForContainer(c.container);
     var dozHandmatig=c.dozen!==''&&c.dozen!==null&&c.dozen!==undefined;
     var colli=dozHandmatig?parseInt(c.dozen||0):sd.dozen;
-    // SKU: aantal orders (rijen in Sumatra) voor deze container
+    // SKU: aantal orders (rijen in Sumatra) voor deze container.
+    // Docklay markeert SKU als verplicht, dus fallback op 1 als geen match.
     var contNr=c.container;
     var orderCnt=0;
     allData.forEach(function(r){if(String(r['Container']||'').trim()===contNr)orderCnt++;});
-    // Containertype voor Docklay (vrije keuze in CP; fallback op auto-mapping)
+    if(!orderCnt)orderCnt=1;
+    // Containertype voor Docklay — alleen 20_FT/40_FT/40_FT_HC/TRUCK toegestaan.
     var dType=c.docklayType||cpAutoDocklayType(c.type)||'';
+    if(DOCKLAY_TYPES.indexOf(dType)===-1)dType='';
     rows.push([
       'D.P. Factory',          // Bedrijfsnaam (standaard)
       'DP Lingewei',           // Locatie (standaard)
@@ -2578,7 +2599,7 @@ function cpExportDocklay(){
       'LOSSEN',                // Taaktype (standaard)
       c.container||'',         // Containernummer
       'Standaard',             // Prijsgroep (standaard)
-      orderCnt||'',            // SKU = aantal orders in container
+      orderCnt,                // SKU = aantal orders in container (verplicht)
       colli||'',               // Colli (dozen)
       ''                       // Tonnage (leeg \u2014 gebruiker vult zelf)
     ]);
