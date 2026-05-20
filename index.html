@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="nl"><head>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DP Factory — Planner</title>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 /* cyrillic-ext */
 @font-face {
@@ -382,6 +382,10 @@
   --shadow:0 1px 2px rgba(16,24,40,.04),0 0 0 1px rgba(16,24,40,.04);
   --shadow2:0 12px 32px rgba(16,24,40,.10),0 2px 8px rgba(16,24,40,.05);
   --shadow3:0 1px 2px rgba(16,24,40,.04);
+  /* GitHub sync vars */
+  --accent2:#40C8F0;
+  --muted:#8A93A0;
+  --surface:#F8FAFC;
 }
 
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -987,39 +991,9 @@ sectie                            ║
 }
 .gh-steps strong { color:var(--text); }
 
-/* ── LEVERDATUM CONFLICT MODAL ─────────────────────────── */
-#lev-conflict-modal{display:none;position:fixed;inset:0;background:rgba(17,24,39,.55);z-index:9999;align-items:flex-start;justify-content:center;padding-top:60px;backdrop-filter:blur(3px);}
-#lev-conflict-modal.open{display:flex;}
-.lc-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;width:780px;max-width:96vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.18);}
-.lc-head{padding:20px 24px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
-.lc-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:3px;}
-.lc-sub{font-size:12px;color:var(--text3);line-height:1.5;}
-.lc-toolbar{padding:10px 24px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;flex-shrink:0;background:var(--bg3);}
-.lc-scroll{overflow-y:auto;flex:1;}
-.lc-table{width:100%;border-collapse:collapse;}
-.lc-table th{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding:8px 14px;text-align:left;border-bottom:1px solid var(--border);background:var(--bg3);white-space:nowrap;position:sticky;top:0;}
-.lc-table td{padding:9px 14px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);vertical-align:middle;}
-.lc-table tr:last-child td{border-bottom:none;}
-.lc-table tr:hover td{background:#F8FAFE;}
-.lc-radio-group{display:flex;gap:6px;align-items:center;}
-.lc-radio{display:flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;border:1px solid var(--border2);cursor:pointer;font-size:11px;font-weight:500;color:var(--text3);transition:all .12s;white-space:nowrap;}
-.lc-radio input{display:none;}
-.lc-radio.import.sel{background:#EFF6FF;border-color:#BFDBFE;color:var(--accent);}
-.lc-radio.manual.sel{background:#F0FDF4;border-color:#BBF7D0;color:var(--green);}
-.lc-foot{padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;background:var(--bg3);}
-.lc-diff-badge{display:inline-block;padding:1px 7px;border-radius:99px;font-size:10px;font-weight:600;}
-.lc-diff-badge.plus{background:#FEF2F2;color:var(--red);border:1px solid #FECACA;}
-.lc-diff-badge.minus{background:#F0FDF4;color:var(--green);border:1px solid #BBF7D0;}
 </style>
 </head>
 <body>
-<div class="trial" id="trial-banner">
-  <span>Importeer je <b>Sumatra MA</b> Excel om te beginnen — sleep het bestand of klik op <a onclick="document.getElementById('file-input').click()">Nieuwe import</a>.</span>
-  <button class="trial-close" onclick="this.parentNode.style.display='none'" title="Sluiten">×</button>
-</div>
-
-
-
 <div class="topbar">
   <div class="brand" title="DP Factory workspace">
     <div class="brand-logo">dp</div>
@@ -1129,8 +1103,6 @@ sectie                            ║
       <div class="ni" onclick="bewaarData()"><span class="ni-icon">↓</span> Data bewaren</div>
       <div class="ni" onclick="document.getElementById('restore-input').click()"><span class="ni-icon">↑</span> Data herstellen</div>
       <div class="ni" id="nav-pub" onclick="publishOverzicht()" style="display:none"><span class="ni-icon">▶</span> Publiceer</div>
-      <div class="ni" id="nav-xl" onclick="exportExcel()" style="display:none"><span class="ni-icon">⊞</span> Export Excel</div>
-      <div class="ni" id="nav-pdf" onclick="exportPDF()" style="display:none"><span class="ni-icon">⎙</span> Export PDF</div>
       <div class="ni" id="nav-inst" onclick="showTab('inst',this)"><span class="ni-icon">⚙</span> Instellingen</div>
     </div>
 
@@ -1311,8 +1283,6 @@ sectie                            ║
       <div class="selbar" id="selbar">
         <span id="selcount">0 geselecteerd</span>
         <div style="margin-left:auto;display:flex;gap:6px;">
-          <button class="btn btn-blue btn-sm" onclick="exportExcel()">↓ Excel</button>
-          <button class="btn btn-accent btn-sm" onclick="exportPDF()">↓ PDF</button>
           <button class="btn btn-ghost btn-sm" onclick="clearSel()">Deselecteer</button>
         </div>
       </div>
@@ -1348,7 +1318,7 @@ sectie                            ║
 
     <!-- BOTEN TAB -->
     <div id="tab-b" style="display:none;flex:1;overflow-y:auto;flex-direction:column;">
-      <div class="toolbar"><span style="font-size:12px;color:var(--text2);">Boten &amp; vertragingsoverzicht</span><span style="font-size:11px;color:var(--text3);margin-left:8px;">✎ Orig. ETA instellen · Lostijd in dagen invullen</span></div>
+      <div class="toolbar"><span style="font-size:12px;color:var(--text2);">Boten &amp; vertragingsoverzicht</span><span style="font-size:11px;color:var(--text3);margin-left:8px;">✎ Orig. ETA instellen · Lostijd in dagen invullen</span><button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="resetAllOrigETA()" title="Zet alle Orig. ETA gelijk aan huidige ETA (vertraging wordt 0)">↺ Reset Orig. ETA</button></div>
       <div class="content"><div class="boat-grid" id="boat-grid"><div class="empty" style="grid-column:1/-1;">Geen data geladen</div></div></div>
     </div>
 
@@ -1466,13 +1436,14 @@ sectie                            ║
   </div>
 </div>
 
-<!-- Orig ETA Modal -->
+<!-- Orig / Huidig ETA Modal -->
 <div class="modal-bg" id="orig-modal">
   <div class="modal">
-    <div class="modal-title">Originele ETA instellen</div>
+    <div class="modal-title">ETA instellen</div>
     <div class="modal-sub" id="orig-sub"></div>
     <div class="field"><label>Boot</label><input type="text" id="orig-boot" readonly=""></div>
     <div class="field"><label>Originele ETA</label><input type="date" id="orig-eta-val"></div>
+    <div class="field"><label>Huidige ETA <span style="font-size:11px;color:var(--text3);">(overschrijft Excel)</span></label><input type="date" id="huidig-eta-val"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeOrig()">Annuleren</button>
       <button class="btn btn-teal" onclick="saveOrig()">Opslaan</button>
@@ -1525,7 +1496,7 @@ var DAGEN_VOL=['Zondag','Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Za
 var allData=[],AF=new Set(),PF=new Set(),filterNL=false;
 var SC='status_order',SA=true,showHidden=false,selIdx=new Set();
 var STO={'te-laat':0,'krap':1,'op-schema':2,'onbekend':3};
-var origETAs={},orderMeta={},boatComments={},boatLos={},archivedOrders={};
+var origETAs={},huidigETAs={},orderMeta={},boatComments={},boatLos={},archivedOrders={};
 var cpContainers=[];
 var cpSelContainers=new Set(); // containernummers aangevinkt voor Docklay-export
 var cpFilterMode='all',cpEditIdx=-1,cpSpoedVal=false;
@@ -1536,6 +1507,7 @@ var homeStatusFilter=''; // '', te-laat, krap, op-schema
 
 function loadStorage(){
   try{origETAs=JSON.parse(localStorage.getItem('dp5_orig')||'{}');}catch(e){origETAs={};}
+  try{huidigETAs=JSON.parse(localStorage.getItem('dp5_heta')||'{}');}catch(e){huidigETAs={};}
   try{orderMeta=JSON.parse(localStorage.getItem('dp5_meta')||'{}');}catch(e){orderMeta={};}
   try{boatComments=JSON.parse(localStorage.getItem('dp5_bcom')||'{}');}catch(e){boatComments={};}
   try{boatLos=JSON.parse(localStorage.getItem('dp5_blos')||'{}');}catch(e){boatLos={};}
@@ -1556,12 +1528,13 @@ function loadStorage(){
   }catch(e){ allData=[]; }
   if(!klantGroepen.length){
     // Standaard: AS Watson groep
-    klantGroepen=[{naam:'AS Watson',klanten:['Kruidvat','Trekpleister','ICI Paris XL','Sacha','AS Watson'],telaat:-7,krap:0}];
+    klantGroepen=[{naam:'AS Watson',klanten:['Kruidvat','Trekpleister','ICI Paris XL','Sacha','AS Watson'],telaat:0,krap:-7}];
   }
 }
 // _saveStorageCore: het echte werk. Wordt aangeroepen door de wrapper.
 function _saveStorageCore(){
   try{localStorage.setItem('dp5_orig',JSON.stringify(origETAs));}catch(e){}
+  try{localStorage.setItem('dp5_heta',JSON.stringify(huidigETAs));}catch(e){}
   try{localStorage.setItem('dp5_meta',JSON.stringify(orderMeta));}catch(e){}
   try{localStorage.setItem('dp5_bcom',JSON.stringify(boatComments));}catch(e){}
   try{localStorage.setItem('dp5_blos',JSON.stringify(boatLos));}catch(e){}
@@ -1628,6 +1601,9 @@ function auditNow(){var n=new Date();return n.getDate()+' '+MN[n.getMonth()]+' '
 function stampAudit(key,veld){orderMeta[key]=orderMeta[key]||{};orderMeta[key]._audit=orderMeta[key]._audit||[];orderMeta[key]._audit.push({t:auditNow(),v:veld});if(orderMeta[key]._audit.length>5)orderMeta[key]._audit.shift();}
 function toISO(d){if(!d)return '';return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function addDays(d,n){var r=new Date(d);r.setDate(r.getDate()+n);return r;}
+// SheetJS cellDates:true geeft UTC-midnight Date objecten. Zet om naar lokale midnight
+// zodat datumvergelijkingen geen tijdzone-offset bevatten.
+function toLocalMidnight(d){if(!d||!(d instanceof Date)||isNaN(d))return d;return new Date(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate());}
 function daysUntil(d){var t=new Date();t.setHours(0,0,0,0);return d?Math.round((d-t)/86400000):null;}
 function calcDagen(a,b){
   var e=a instanceof Date?a:pD(a);
@@ -1647,19 +1623,31 @@ function getKlantGroep(klant){
   return null;
 }
 function calcSt(d,klant){
+  // dagenverschil = ETA - leverdatum klant
+  // positief = ETA na leverdatum (te laat), negatief = ETA voor leverdatum (marge)
   if(d===null)return 'onbekend';
   var g=getKlantGroep(klant);
   if(g){
-    if(d<=g.telaat)return 'te-laat';
-    if(d<=g.krap)return 'krap';
+    // klantgroep drempelwaarden: negatief zijn, bv. telaat=0, krap=-7
+    if(d>=g.telaat)return 'te-laat';
+    if(d>g.krap)return 'krap';
     return 'op-schema';
   }
-  if(d<0)return 'te-laat';
-  if(d<=7)return 'krap';
+  if(d>0)return 'te-laat';
+  if(d>=-7)return 'krap';
   return 'op-schema';
 }
 function calcLos(etaRaw,boot){var n=parseInt(boatLos[boot]||0);if(!n||!etaRaw)return null;var e=pD(etaRaw);return e?addDays(e,n):null;}
 function okey(r){return (String(r['Besteloms.']||'')+'-'+String(r['Container']||'')+'-'+String(r['Artikel']||'')).trim();}
+function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function pruneOrderMeta(){
+  var active=new Set();
+  allData.forEach(function(r){active.add(r._key);});
+  Object.keys(archivedOrders).forEach(function(k){active.add(k);});
+  var removed=0;
+  Object.keys(orderMeta).forEach(function(k){if(!active.has(k)){delete orderMeta[k];removed++;}});
+  if(removed)console.log('[pruneOrderMeta] verwijderd:',removed);
+}
 function getWeekNum(d){var dt=new Date(d);dt.setHours(0,0,0,0);dt.setDate(dt.getDate()+4-(dt.getDay()||7));var y=new Date(dt.getFullYear(),0,1);return Math.ceil(((dt-y)/86400000+1)/7);}
 function getWeekStart(y,w){var d=new Date(y,0,1);d.setDate(d.getDate()+(w-1)*7-(d.getDay()||7)+1);return d;}
 
@@ -1714,62 +1702,56 @@ function processData(rows,fname){
   allData.forEach(function(r){if(!newKeys.has(r._key)&&!archivedOrders[r._key]){archivedOrders[r._key]=Object.assign({},r,{_arch_reden:'Automatisch — niet meer in import',_arch_datum:new Date().toLocaleDateString('nl-NL',{day:'2-digit',month:'2-digit',year:'numeric'})});archived++;}});
   if(archived)saveStorage();
 
-  // ── Detecteer leverdatum conflicten vóór verwerken ────────────────────
-  var conflicts = [];
+  // ── Import is altijd leidend voor leverdatum ─────────────────────────
+  // Verwijder handmatige leverdatums waar de import een datum heeft.
+  // Tel hoeveel orders worden overschreven voor de statusbalk-melding.
+  var overrideCount = 0;
   rows.forEach(function(r){
     if(!String(r['Container']||'').trim())return;
     if(String(r['Klantnaam']||'').trim()==='Action Service & Distributie B.V. (NL)')return;
     var key = okey(r);
     var meta = orderMeta[key]||{};
-    if(!meta.leverdatum)return; // geen handmatige datum → geen conflict
-    var importLev = r['Leverdatum Klant'] instanceof Date ? r['Leverdatum Klant'] : pD(r['Leverdatum Klant']);
-    if(!importLev)return; // import heeft geen leverdatum → geen conflict
+    if(!meta.leverdatum)return; // geen handmatige datum → niets te doen
+    var importLev = toLocalMidnight(r['Leverdatum Klant'] instanceof Date ? r['Leverdatum Klant'] : pD(r['Leverdatum Klant']));
+    if(!importLev)return; // import heeft geen datum → bewaar handmatige datum
     var importIso = toISO(importLev);
-    if(importIso === meta.leverdatum)return; // zelfde → geen conflict
-    conflicts.push({
-      key: key,
-      order: String(r['Besteloms.']||'').trim().substring(0,20),
-      klant: String(r['Klantnaam']||'').trim().split(' ').slice(0,3).join(' '),
-      manualIso: meta.leverdatum,
-      importIso: importIso,
-    });
+    if(importIso === meta.leverdatum)return; // zelfde → geen actie
+    // Import verschilt van handmatig → import wint, verwijder handmatige datum
+    delete orderMeta[key].leverdatum;
+    overrideCount++;
   });
 
-  // ── Verwerk daadwerkelijk (met keuzes) ───────────────────────────────
-  function doProcess(choices){
-    // Pas choices toe: update orderMeta voor orders waarbij 'import' gekozen is
-    if(choices){
-      Object.keys(choices).forEach(function(key){
-        if(choices[key]==='import'){
-          // Verwijder handmatige datum → import datum wordt gebruikt
-          if(orderMeta[key]) delete orderMeta[key].leverdatum;
-        }
-        // 'manual': niets doen, meta.leverdatum blijft bewaard
-      });
-    }
+  // ── Verwerk data ──────────────────────────────────────────────────────
+  function doProcess(){
 
     allData=rows.map(function(r){
       if(!String(r['Container']||'').trim())return null;
       if(String(r['Klantnaam']||'').trim()==='Action Service & Distributie B.V. (NL)')return null;
       var out=Object.assign({},r);
-      out._eta_raw=r['ETA'] instanceof Date?r['ETA']:pD(r['ETA']);
-      out._lev_raw=r['Leverdatum Klant'] instanceof Date?r['Leverdatum Klant']:pD(r['Leverdatum Klant']);
-      out._etd_raw=r['ETD'] instanceof Date?r['ETD']:pD(r['ETD']);
+      out._eta_raw=toLocalMidnight(r['ETA'] instanceof Date?r['ETA']:pD(r['ETA']));
+      out._lev_raw=toLocalMidnight(r['Leverdatum Klant'] instanceof Date?r['Leverdatum Klant']:pD(r['Leverdatum Klant']));
+      out._etd_raw=toLocalMidnight(r['ETD'] instanceof Date?r['ETD']:pD(r['ETD']));
       out['ETA']=fmtD(r['ETA']);out['ETD']=fmtD(r['ETD']);out['Leverdatum Klant']=fmtD(r['Leverdatum Klant']);
       var boot=String(r['Boot']||'').trim();
+      // Orig. ETA: eerste keer automatisch instellen op import-ETA
+      if(!origETAs[boot]&&out._eta_raw){
+        origETAs[boot]=toISO(out._eta_raw);
+      }
+      // Huidige ETA: handmatig ingesteld via bootkaart heeft prioriteit boven Excel
+      if(huidigETAs[boot]){
+        var hd=pD(huidigETAs[boot]);
+        if(hd){out._eta_raw=hd;out['ETA']=fmtD(hd);}
+      }
       var oi=origETAs[boot]||'';out._orig_iso=oi;out._orig_fmt=oi?fmtD(oi):'';
-      var o2=pD(oi);out._delay=(o2&&out._eta_raw)?Math.round((out._eta_raw-o2)/86400000):null;
+      var o2=pD(oi);out._delay=(o2&&out._eta_raw)?Math.round((o2-out._eta_raw)/86400000):null;
       var ld=calcLos(out._eta_raw,boot);out._losdate=ld;out._losdate_fmt=ld?fmtD(ld):'';
       out._days_until=daysUntil(out._eta_raw);
       var key=okey(out);out._key=key;
       var meta=orderMeta[key]||{};
       out._comment=meta.comment||'';out._prio=meta.prio||'';out._hidden=meta.hidden||false;out._manual_lev=false;
+      // Als de import geen leverdatum heeft maar er is wel een handmatig ingevoerde datum → gebruik die
       if(!out._lev_raw&&meta.leverdatum){out._lev_raw=pD(meta.leverdatum);out['Leverdatum Klant']=fmtD(meta.leverdatum);out._manual_lev=true;}
-      else if(out._lev_raw&&meta.leverdatum){
-        // Handmatige datum behouden (import keuze werd al verwerkt hierboven)
-        out._lev_raw=pD(meta.leverdatum);out['Leverdatum Klant']=fmtD(meta.leverdatum);out._manual_lev=true;
-      }
-      out.dagenverschil=calcDagen(out._eta_raw,out._lev_raw);out.status=calcSt(out.dagenverschil,r['Klantnaam']);out.status_order=STO[out.status];
+      out.dagenverschil=calcDagen(out._lev_raw,out._eta_raw);out.status=calcSt(out.dagenverschil,r['Klantnaam']);out.status_order=STO[out.status];
       // Auto-prioriteit: op-schema zonder handmatige prio → Laag
       if(out.status==='op-schema'&&!out._prio){
         out._prio='Laag';
@@ -1805,20 +1787,20 @@ function processData(rows,fname){
     }
   });
   if(nieuw>0)saveStorage();
+  pruneOrderMeta();
   saveStorage();
   selIdx.clear();
   document.getElementById('topbar-status').textContent='Geladen: '+fname+(archived?' | '+archived+' gearchiveerd':'')+(nieuw?' | '+nieuw+' containers toegevoegd':'');
-  ['nav-pub','nav-xl','nav-pdf'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='flex';});
+  ['nav-pub'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='flex';});
   var tb=document.getElementById('trial-banner');if(tb)tb.style.display='none';
   populateDDs();populateCPBootSelect();renderStats();render();renderArchief();renderHome();
   if(curTab==='b')renderBoats();if(curTab==='cp')renderCP();
   } // end doProcess
 
-  // ── Toon conflictmodal of verwerk direct ─────────────────────────────
-  if(conflicts.length > 0){
-    lcShowConflicts(conflicts, function(choices){ doProcess(choices); });
-  } else {
-    doProcess(null);
+  // ── Verwerk direct — import is altijd leidend ────────────────────────
+  doProcess();
+  if(overrideCount > 0){
+    showNotif('&#8635; '+overrideCount+' leverdatum'+(overrideCount===1?' is':' zijn')+' bijgewerkt vanuit de import');
   }
 }
 
@@ -2069,12 +2051,12 @@ function getSorted(data){
   });
   return data.slice().sort(function(a,b){
     if(SC==='dagenverschil'||SC==='status_order'||SC==='_delay'||SC==='_days_until'){var va=(a[SC]===null||a[SC]===undefined)?9999:a[SC];var vb=(b[SC]===null||b[SC]===undefined)?9999:b[SC];return SA?va-vb:vb-va;}
-    if(df[SC]){var rk=df[SC];var da=a[rk],db=b[rk];if(!(da instanceof Date))da=pD(da);if(!(db instanceof Date))db=pD(db);if(da&&db)return SA?da.getTime()-db.getTime():db.getTime()-da.getTime();if(da&&!db)return SA?-1:1;if(!da&&db)return SA?1:-1;return 0;}
+    if(df[SC]){var rk=df[SC];var da=a[rk],db=b[rk];if(!(da instanceof Date))da=pD(da);if(!(db instanceof Date))db=pD(db);if(da&&db)return SA?da.getTime()-db.getTime():db.getTime()-da.getTime();if(da&&!db)return 1;if(!da&&db)return -1;return 0;}
     return SA?String(a[SC]||'').localeCompare(String(b[SC]||'')):String(b[SC]||'').localeCompare(String(a[SC]||''));
   });
 }
 
-function mLabel(d){if(d===null)return{t:'—',c:'mn'};if(d<0)return{t:Math.abs(d)+' d te laat',c:'ml'};if(d<=7)return{t:d+' d marge',c:'mk'};return{t:d+' d marge',c:'mo'};}
+function mLabel(d){if(d===null)return{t:'—',c:'mn'};if(d>0)return{t:d+' d te laat',c:'ml'};if(d>=-7)return{t:Math.abs(d)+' d marge',c:'mk'};return{t:Math.abs(d)+' d marge',c:'mo'};}
 function sb(col){SA=SC===col?!SA:true;SC=col;render();}
 function toggleSelect(idx,cb){if(cb.checked)selIdx.add(idx);else selIdx.delete(idx);updateSelBar();render();}
 function toggleAllVis(mc){getFiltered().forEach(function(r){var i=allData.indexOf(r);if(mc.checked)selIdx.add(i);else selIdx.delete(i);});updateSelBar();render();}
@@ -2109,7 +2091,7 @@ function updateLev(idx,v){
   r._lev_raw=d;
   r['Leverdatum Klant']=fmtD(d);
   r._manual_lev=true;
-  r.dagenverschil=calcDagen(r._eta_raw,d);
+  r.dagenverschil=calcDagen(d,r._eta_raw);
   r.status=calcSt(r.dagenverschil,r['Klantnaam']);
   r.status_order=STO[r.status];
   // Auto-prioriteit: op-schema zonder handmatige prio → Laag
@@ -2127,9 +2109,30 @@ function herstelArchief(key){delete archivedOrders[key];saveStorage();renderArch
 function clearArchief(){if(confirm('Archief leegmaken?')){archivedOrders={};saveStorage();renderArchief();updateArchBadge();}}
 
 // ── Orig ETA ──
-function openOrig(boot){origBoot=boot;document.getElementById('orig-boot').value=boot;document.getElementById('orig-eta-val').value=origETAs[boot]||'';document.getElementById('orig-sub').textContent='Eenmalig per boot: '+boot;document.getElementById('orig-modal').className='modal-bg open';}
+function openOrig(boot){origBoot=boot;document.getElementById('orig-boot').value=boot;document.getElementById('orig-eta-val').value=origETAs[boot]||'';document.getElementById('huidig-eta-val').value=huidigETAs[boot]||'';document.getElementById('orig-sub').textContent='Boot: '+boot;document.getElementById('orig-modal').className='modal-bg open';}
 function closeOrig(){document.getElementById('orig-modal').className='modal-bg';}
-function saveOrig(){var val=document.getElementById('orig-eta-val').value;if(val){origETAs[origBoot]=val;saveStorage();allData.forEach(function(r){if(String(r['Boot']||'').trim()===origBoot){r._orig_iso=val;r._orig_fmt=fmtD(val);var o=pD(val);r._delay=(o&&r._eta_raw)?Math.round((r._eta_raw-o)/86400000):null;}});renderStats();render();if(curTab==='b')renderBoats();}closeOrig();}
+function saveOrig(){
+  var origVal=document.getElementById('orig-eta-val').value;
+  var huidigVal=document.getElementById('huidig-eta-val').value;
+  if(origVal) origETAs[origBoot]=origVal;
+  if(huidigVal) huidigETAs[origBoot]=huidigVal; else delete huidigETAs[origBoot];
+  saveStorage();
+  var hd=huidigVal?pD(huidigVal):null;
+  allData.forEach(function(r){
+    if(String(r['Boot']||'').trim()!==origBoot) return;
+    if(origVal){r._orig_iso=origVal;r._orig_fmt=fmtD(origVal);}
+    if(hd){r._eta_raw=hd;r['ETA']=fmtD(huidigVal);}
+    var o=pD(origETAs[origBoot]||'');
+    r._delay=(o&&r._eta_raw)?Math.round((o-r._eta_raw)/86400000):null;
+    r._days_until=daysUntil(r._eta_raw);
+    var ld=calcLos(r._eta_raw,origBoot);r._losdate=ld;r._losdate_fmt=ld?fmtD(ld):'';
+    r.dagenverschil=calcDagen(r._lev_raw,r._eta_raw);
+    r.status=calcSt(r.dagenverschil,r['Klantnaam']);
+    r.status_order=STO[r.status];
+  });
+  renderStats();render();if(curTab==='b')renderBoats();
+  closeOrig();
+}
 
 // ── Boat Los ──
 function saveBoatLos(boot,val){boatLos[boot]=val;saveStorage();allData.forEach(function(r){if(String(r['Boot']||'').trim()===boot){var ld=calcLos(r._eta_raw,boot);r._losdate=ld;r._losdate_fmt=ld?fmtD(ld):'';} });if(curTab==='o')render();}
@@ -2173,25 +2176,25 @@ function render(){
     var sm2=SM[r.status]||['bg','?'];var mg=mLabel(r.dagenverschil);
     var boot=String(r['Boot']||'').trim();
     var origCell=r._orig_fmt?r._orig_fmt:'<button class="btn btn-ghost btn-sm" onclick="openOrig(\''+boot.replace(/'/g,"\\'")+'\')">+ Instellen</button>';
-    var dl=r._delay===null?'<span class="dz">—</span>':(r._delay>0?'<span class="dp">+'+r._delay+' d</span>':r._delay<0?'<span class="dn">'+r._delay+' d</span>':'<span class="dn">Op tijd</span>');
+    var dl=r._delay===null?'<span class="dz">—</span>':(r._delay<0?'<span class="dp">'+r._delay+' d</span>':r._delay>0?'<span class="dn">+'+r._delay+' d</span>':'<span class="dn">Op tijd</span>');
     var levD=r._lev_raw instanceof Date?r._lev_raw:(r._lev_raw?pD(r._lev_raw):null);
     var levTxt=levD?(levD.getDate()+' '+MNS[levD.getMonth()]+(levD.getFullYear()!==(new Date()).getFullYear()?' '+levD.getFullYear():'')):'';
-    var levCell='<button class="dp-trigger'+(levD?'':' empty')+(r._manual_lev?' manual':'')+'" onclick="openLevPicker(this,'+idx+')" title="'+(r._manual_lev?'Handmatig ingevuld':'Klik om datum te kiezen')+'">'
+    var levCell='<button class="dp-trigger'+(levD?'':' empty')+(r._manual_lev?' manual':'')+'" onclick="openLevPicker(this,'+idx+')" title="'+(r._manual_lev?'Handmatig — wordt overschreven bij volgende import':'Klik om datum in te voeren (import heeft voorrang)')+'">'
       +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'
       +'<span>'+(levTxt||'Geen datum')+'</span>'
       +'</button>';
     var pc=r._prio==='Hoog'?'ph-hoog':r._prio==='Middel'?'ph-mid':r._prio==='Laag'?'ph-laag':'';
     h+='<tr class="'+(r._hidden?'hidden-row':sel?'sel-row':'')+' '+pc+'">'
       +'<td><input type="checkbox" '+(sel?'checked':'')+' onchange="toggleSelect('+idx+',this)"></td>'
-      +'<td style="color:var(--text)">'+(r['Besteloms.']||'—')+'</td>'
-      +'<td>'+(r['Artikel']||'—')+'</td><td>'+(r['Art Omschr.']||'—')+'</td><td>'+(r['Klantnaam']||'—')+'</td>'
-      +'<td>'+(r['Container']||'—')+'</td><td>'+(r['Boot']||'—')+'</td><td>'+(r['ETD']||'—')+'</td>'
-      +'<td>'+origCell+'</td><td>'+(r['ETA']||'—')+'</td><td>'+dl+'</td>'
+      +'<td style="color:var(--text)">'+esc(r['Besteloms.']||'—')+'</td>'
+      +'<td>'+esc(r['Artikel']||'—')+'</td><td>'+esc(r['Art Omschr.']||'—')+'</td><td>'+esc(r['Klantnaam']||'—')+'</td>'
+      +'<td>'+esc(r['Container']||'—')+'</td><td>'+esc(r['Boot']||'—')+'</td><td>'+esc(r['ETD']||'—')+'</td>'
+      +'<td>'+origCell+'</td><td>'+esc(r['ETA']||'—')+'</td><td>'+dl+'</td>'
       +'<td>'+getTielLosdatumCell(String(r['Container']||'').trim())+'</td><td>'+levCell+'</td>'
       +'<td><span class="badge '+sm2[0]+'">'+sm2[1]+'</span></td>'
       +'<td class="marge '+mg.c+'">'+mg.t+'</td>'
       +'<td><select class="ps" onchange="updatePrio('+idx+',this.value)"><option value="">—</option><option value="Hoog" '+(r._prio==='Hoog'?'selected':'')+'>&#128308; Hoog</option><option value="Middel" '+(r._prio==='Middel'?'selected':'')+'>&#128992; Middel</option><option value="Laag" '+(r._prio==='Laag'?'selected':'')+'>&#128994; Laag</option></select></td>'
-      +'<td><input class="ci" style="width:115px;" type="text" placeholder="Commentaar..." value="'+r._comment.replace(/"/g,'&quot;')+'" onchange="updateComment('+idx+',this.value)"></td>'
+      +'<td><input class="ci" style="width:115px;" type="text" placeholder="Commentaar..." value="'+esc(r._comment)+'" onchange="updateComment('+idx+',this.value)"></td>'
       +'<td style="font-size:10px;color:var(--text3);white-space:nowrap;">'+((orderMeta[r._key]&&orderMeta[r._key]._audit&&orderMeta[r._key]._audit.length)?orderMeta[r._key]._audit[orderMeta[r._key]._audit.length-1].t+'<br><span style="color:var(--text3);font-size:9px;">'+orderMeta[r._key]._audit[orderMeta[r._key]._audit.length-1].v+'</span>':'—')+'</td>'
       +'<td style="white-space:nowrap;"><button class="btn-hd" onclick="hideOrder('+idx+')" title="Verberg">&#8722;</button> <button class="btn-rs" onclick="markeerOntvangen('+idx+')" title="Ontvangen">&#10003;</button></td>'
       +'</tr>';
@@ -2199,21 +2202,45 @@ function render(){
   tbody.innerHTML=h;
 }
 
+
+
+
+function resetAllOrigETA(){
+  if(!confirm('Alle Orig. ETA waarden resetten naar de huidige ETA? Vertraging wordt 0 voor alle boten.')) return;
+  allData.forEach(function(r){
+    var boot=String(r['Boot']||'').trim();
+    if(boot&&r._eta_raw){
+      origETAs[boot]=toISO(r._eta_raw);
+      r._orig_iso=origETAs[boot];
+      r._orig_fmt=fmtD(origETAs[boot]);
+      r._delay=0;
+    }
+  });
+  saveStorage();
+  renderBoats();
+  render();
+}
+
 // ── Render boten ──
 function renderBoats(){
   var boats={};
   allData.filter(function(r){return !r._hidden;}).forEach(function(r){
     var b=String(r['Boot']||'').trim();if(!b)return;
-    if(!boats[b]){boats[b]={etaRaw:r._eta_raw,etaFmt:r['ETA'],origFmt:r._orig_fmt,delay:r._delay,daysUntil:r._days_until,orders:0};}
+    if(!boats[b]){
+      var oi=origETAs[b]||'';
+      var o2=pD(oi);
+      var eta=r._eta_raw;
+      boats[b]={etaRaw:r._eta_raw,etaFmt:r['ETA'],origFmt:r._orig_fmt,delay:r._delay,daysUntil:r._days_until,orders:0,manualEta:!!huidigETAs[b]};
+    }
     boats[b].orders++;
   });
   var h='';
   Object.keys(boats).sort(function(a,b){var da=boats[a].daysUntil===null?9999:boats[a].daysUntil;var db=boats[b].daysUntil===null?9999:boats[b].daysUntil;return da-db;}).forEach(function(b){
     var bo=boats[b];var losN=parseInt(boatLos[b]||0);var losDate=bo.etaRaw&&losN?fmtD(addDays(bo.etaRaw,losN)):'—';
-    var cc=bo.delay!==null&&bo.delay>0?'bc del':(bo.daysUntil!==null&&bo.daysUntil<=7?'bc sn':'bc fn');
-    var bc2=bo.delay!==null&&bo.delay>0?'bc-badge urg':(bo.daysUntil!==null&&bo.daysUntil<=7?'bc-badge sn':'bc-badge fn');
+    var cc=bo.delay!==null&&bo.delay<0?'bc del':(bo.daysUntil!==null&&bo.daysUntil<=7?'bc sn':'bc fn');
+    var bc2=bo.delay!==null&&bo.delay<0?'bc-badge urg':(bo.daysUntil!==null&&bo.daysUntil<=7?'bc-badge sn':'bc-badge fn');
     var bt=bo.daysUntil===null?'Onbekend':(bo.daysUntil<0?'Gearriveerd':bo.daysUntil===0?'Aankomst vandaag':'Aankomst over '+bo.daysUntil+' d');
-    var dh=bo.delay===null?'<span class="bmv">—</span>':(bo.delay>0?'<span class="bmv r">+'+bo.delay+' d</span>':bo.delay<0?'<span class="bmv g">'+bo.delay+' d</span>':'<span class="bmv g">Op tijd</span>');
+    var dh=bo.delay===null?'<span class="bmv">—</span>':(bo.delay<0?'<span class="bmv r">'+bo.delay+' d</span>':bo.delay>0?'<span class="bmv g">+'+bo.delay+' d</span>':'<span class="bmv g">Op tijd</span>');
     var duh=bo.daysUntil===null?'<span class="bmv">—</span>':(bo.daysUntil<0?'<span class="bmv g">Gearr.</span>':bo.daysUntil<=7?'<span class="bmv o">'+bo.daysUntil+' d</span>':'<span class="bmv g">'+bo.daysUntil+' d</span>');
     var resId='lr-'+b.replace(/[^a-zA-Z0-9]/g,'_');
     h+='<div class="'+cc+'"><div class="bc-top"><div class="'+bc2+'">&#9679; '+bt+'</div>'
@@ -2221,13 +2248,13 @@ function renderBoats(){
       +'<div><div class="bc-name">'+b+'</div><div class="bc-sub">'+bo.orders+' orders</div></div>'
       +'<button class="orig-btn" onclick="openOrig(\''+b.replace(/'/g,"\\'")+'\')">&#9998; Orig. ETA</button></div></div>'
       +'<div class="bc-metrics"><div class="bm"><div class="bml">Orig. ETA</div><div class="bmv">'+(bo.origFmt||'—')+'</div></div>'
-      +'<div class="bm"><div class="bml">Huidige ETA</div><div class="bmv">'+(bo.etaFmt||'—')+'</div></div>'
+      +'<div class="bm"><div class="bml">Huidige ETA</div><div class="bmv">'+(bo.etaFmt||'—')+(bo.manualEta?' <span style="font-size:10px;color:var(--accent);">✎</span>':'')+'</div></div>'
       +'<div class="bm"><div class="bml">Vertraging</div>'+dh+'</div>'
       +'<div class="bm"><div class="bml">Dagen tot aankomst</div>'+duh+'</div></div>'
       +'<div class="bc-bot"><div class="los-row"><span class="los-lbl">Lostijd (d)</span>'
       +'<input class="los-inp" type="number" min="0" max="30" value="'+(boatLos[b]||'')+'" placeholder="0" onchange="saveBoatLos(\''+b.replace(/'/g,"\\'")+'\',this.value)" oninput="updateLosRes(\''+b.replace(/'/g,"\\'")+'\',this.value,\''+resId+'\')">'
       +'<span class="los-res" id="'+resId+'">'+(losN&&bo.etaFmt?'\u2192 '+losDate:'')+'</span></div>'
-      +'<div class="bc-cl">Commentaar</div>'
+            +'<div class="bc-cl">Commentaar</div>'
       +'<textarea class="bc-ta" placeholder="Voeg commentaar toe..." onchange="saveBoatComment(\''+b.replace(/'/g,"\\'")+'\',this.value)">'+(boatComments[b]||'')+'</textarea>'
       +'</div></div>';
   });
@@ -2413,8 +2440,8 @@ function renderCP(){
         return a.container.localeCompare(b.container);
       });
       var etaFmt=etaRaw?fmtD(etaRaw):'—';
-      var etaCls=delay!==null&&delay>0?'cp-beta delay':'cp-beta';
-      var etaTxt=etaFmt+(delay!==null&&delay>0?' (+'+delay+' d vertraagd)':'');
+      var etaCls=delay!==null&&delay<0?'cp-beta delay':'cp-beta';
+      var etaTxt=etaFmt+(delay!==null&&delay<0?' ('+delay+' d vertraagd)':'');
 
       var bId='bp-'+bootName.replace(/[^a-zA-Z0-9]/g,'_')+'-'+wk.replace(/[^a-zA-Z0-9]/g,'_');
       h+='<div class="cp-boat">'
@@ -2422,7 +2449,7 @@ function renderCP(){
         +'<span class="cp-chev open" id="chev-'+bId+'">&#9660;</span>'
         +'<span class="cp-bname">'+bootName+'</span>'
         +'<span class="'+etaCls+'">ETA: '+etaTxt+'</span>'
-        +(delay!==null&&delay>0?'<span class="cp-delay-tag">Vertraagd</span>':'')
+        +(delay!==null&&delay<0?'<span class="cp-delay-tag">Vertraagd</span>':'')
         +'<span class="cp-bcnt">'+bContainers.length+' container'+(bContainers.length!==1?'s':'')+'</span>'
         +'</div>'
         +'<div class="cp-tbl" id="'+bId+'">'
@@ -2826,15 +2853,16 @@ function renderCPArchief(){
       +'<td style="text-align:right;">'+(dozVal||'—')+'</td>'
       +'<td style="color:var(--text3);">'+c._arch_datum_fmt+'</td>'
       +'<td style="font-size:11px;color:'+(c._arch_reden==='Handmatig gelost'?'#1B7A72':c._arch_reden==='Gelost Oudewei'?'#9F7AEA':'#8DA0B3')+';">'+c._arch_reden+'</td>'
-      +'<td><button class="btn-rs" onclick="herstelContainerArchief('+cpArchivedContainers.indexOf(c)+')">&#8617;</button></td>'
+      +'<td><button class="btn-rs" onclick="herstelContainerArchief(\''+c.container+'|'+(c._arch_datum||'')+'\')">&#8617;</button></td>'
       +'</tr>';
   });
   tb.innerHTML=h;
 }
 
-function herstelContainerArchief(idx){
-  var contNr=cpArchivedContainers[idx]?cpArchivedContainers[idx].container:'?';
-  if(idx<0||idx>=cpArchivedContainers.length)return;
+function herstelContainerArchief(key){
+  var idx=cpArchivedContainers.findIndex(function(c){return (c.container+'|'+(c._arch_datum||''))===key;});
+  if(idx===-1)return;
+  var contNr=cpArchivedContainers[idx].container;
   var c=Object.assign({},cpArchivedContainers[idx]);
   delete c._arch_reden;delete c._arch_datum;delete c._arch_datum_fmt;
   cpContainers.push(c);
@@ -2865,7 +2893,7 @@ function renderCPArchiefInline(content){
       +'<td style="text-align:right;">'+(dozVal||'—')+'</td>'
       +'<td style="color:var(--text3);">'+c._arch_datum_fmt+'</td>'
       +'<td style="font-size:11px;color:'+(c._arch_reden==='Handmatig gelost'?'#1B7A72':c._arch_reden==='Gelost Oudewei'?'#9F7AEA':'#8DA0B3')+';">'+c._arch_reden+'</td>'
-      +'<td><button class="btn-rs" onclick="herstelContainerArchief('+cpArchivedContainers.indexOf(c)+')">&#8617;</button></td>'
+      +'<td><button class="btn-rs" onclick="herstelContainerArchief(\''+c.container+'|'+(c._arch_datum||'')+'\')">&#8617;</button></td>'
       +'</tr>';
   });
   h+='</tbody></table></div>';
@@ -2883,7 +2911,7 @@ function renderArchief(){
   keys.forEach(function(key){
     var r=archivedOrders[key];var pr=r._prio?'<span class="badge '+(PC[r._prio]||'')+'">'+r._prio+'</span>':'—';
     var rc=r._arch_reden==='Ontvangen in magazijn'?'color:#80CBC4':'color:#FFBE9D';
-    h+='<tr><td style="color:var(--text)">'+(r['Besteloms.']||'—')+'</td><td>'+(r['Artikel']||'—')+'</td><td>'+(r['Art Omschr.']||'—')+'</td><td>'+(r['Klantnaam']||'—')+'</td><td>'+(r['Container']||'—')+'</td><td>'+(r['Boot']||'—')+'</td><td>'+(r['ETA']||'—')+'</td><td>'+(r['Leverdatum Klant']||'—')+'</td><td>'+pr+'</td><td style="font-size:11px;color:var(--text3);">'+(r._comment||'—')+'</td><td style="font-size:11px;font-weight:500;'+rc+'">'+(r._arch_reden||'—')+'</td><td style="font-size:11px;color:var(--text3);">'+(r._arch_datum||'—')+'</td><td><button class="btn-rs" onclick="herstelArchief(\''+key.replace(/'/g,"\\'")+'\')">&#8617;</button></td></tr>';
+    h+='<tr><td style="color:var(--text)">'+esc(r['Besteloms.']||'—')+'</td><td>'+esc(r['Artikel']||'—')+'</td><td>'+esc(r['Art Omschr.']||'—')+'</td><td>'+esc(r['Klantnaam']||'—')+'</td><td>'+esc(r['Container']||'—')+'</td><td>'+esc(r['Boot']||'—')+'</td><td>'+esc(r['ETA']||'—')+'</td><td>'+(r['Leverdatum Klant']||'—')+'</td><td>'+pr+'</td><td style="font-size:11px;color:var(--text3);">'+(r._comment||'—')+'</td><td style="font-size:11px;font-weight:500;'+rc+'">'+(r._arch_reden||'—')+'</td><td style="font-size:11px;color:var(--text3);">'+(r._arch_datum||'—')+'</td><td><button class="btn-rs" onclick="herstelArchief(\''+key.replace(/'/g,"\\'")+'\')">&#8617;</button></td></tr>';
   });
   tb.innerHTML=h;
 }
@@ -2893,7 +2921,7 @@ function showNotif(msg,isErr){var el=document.getElementById('notif');el.style.b
 
 // ── Bewaar / Herstel ──
 function bewaarData(){
-  var payload={versie:'1.2',datum:new Date().toISOString(),origETAs:origETAs,orderMeta:orderMeta,boatComments:boatComments,boatLos:boatLos,archivedOrders:archivedOrders,cpContainers:cpContainers,klantGroepen:klantGroepen,cpArchivedContainers:cpArchivedContainers};
+  var payload={versie:'1.2',datum:new Date().toISOString(),origETAs:origETAs,huidigETAs:huidigETAs,orderMeta:orderMeta,boatComments:boatComments,boatLos:boatLos,archivedOrders:archivedOrders,cpContainers:cpContainers,klantGroepen:klantGroepen,cpArchivedContainers:cpArchivedContainers};
   var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   var d=new Date();var fname='DP_Plannerdata_'+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'.json';
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;a.click();URL.revokeObjectURL(a.href);
@@ -2906,13 +2934,13 @@ document.getElementById('restore-input').addEventListener('change',function(e){
   reader.onload=function(ev){
     try{
       var p=JSON.parse(ev.target.result);if(!p.versie)throw new Error('Ongeldig bestand');
-      if(p.origETAs)origETAs=p.origETAs;if(p.orderMeta)orderMeta=p.orderMeta;
+      if(p.origETAs)origETAs=p.origETAs;if(p.huidigETAs)huidigETAs=p.huidigETAs;if(p.orderMeta)orderMeta=p.orderMeta;
       if(p.boatComments)boatComments=p.boatComments;if(p.boatLos)boatLos=p.boatLos;
       if(p.archivedOrders)archivedOrders=p.archivedOrders;if(p.cpContainers)cpContainers=p.cpContainers;if(p.klantGroepen)klantGroepen=p.klantGroepen;
       if(p.cpArchivedContainers)cpArchivedContainers=p.cpArchivedContainers;
       saveStorage();
       if(allData.length>0){
-        allData.forEach(function(r){var boot=String(r['Boot']||'').trim();var oi=origETAs[boot]||'';r._orig_iso=oi;r._orig_fmt=oi?fmtD(oi):'';var o2=pD(oi);r._delay=(o2&&r._eta_raw)?Math.round((r._eta_raw-o2)/86400000):null;var ld=calcLos(r._eta_raw,boot);r._losdate=ld;r._losdate_fmt=ld?fmtD(ld):'';var meta=orderMeta[r._key]||{};r._comment=meta.comment||'';r._prio=meta.prio||'';r._hidden=meta.hidden||false;if(!r._lev_raw&&meta.leverdatum){r._lev_raw=pD(meta.leverdatum);r['Leverdatum Klant']=fmtD(meta.leverdatum);r._manual_lev=true;}r.dagenverschil=calcDagen(r._eta_raw,r._lev_raw);r.status=calcSt(r.dagenverschil,r['Klantnaam']);r.status_order=STO[r.status];});
+        allData.forEach(function(r){var boot=String(r['Boot']||'').trim();var oi=origETAs[boot]||'';r._orig_iso=oi;r._orig_fmt=oi?fmtD(oi):'';var o2=pD(oi);r._delay=(o2&&r._eta_raw)?Math.round((o2-r._eta_raw)/86400000):null;var ld=calcLos(r._eta_raw,boot);r._losdate=ld;r._losdate_fmt=ld?fmtD(ld):'';var meta=orderMeta[r._key]||{};r._comment=meta.comment||'';r._prio=meta.prio||'';r._hidden=meta.hidden||false;if(!r._lev_raw&&meta.leverdatum){r._lev_raw=pD(meta.leverdatum);r['Leverdatum Klant']=fmtD(meta.leverdatum);r._manual_lev=true;}r.dagenverschil=calcDagen(r._lev_raw,r._eta_raw);r.status=calcSt(r.dagenverschil,r['Klantnaam']);r.status_order=STO[r.status];});
         populateDDs();populateCPBootSelect();renderStats();render();if(curTab==='b')renderBoats();if(curTab==='cp')renderCP();
       }
       renderArchief();updateArchBadge();
@@ -2925,43 +2953,21 @@ document.getElementById('restore-input').addEventListener('change',function(e){
 // ── Export ──
 function getExportData(){if(selIdx.size>0){var s=[];selIdx.forEach(function(i){s.push(allData[i]);});return getSorted(s);}return getSorted(getFiltered());}
 
-function exportExcel(){
-  var data=getExportData();
-  var SL={'te-laat':'Te laat','krap':'Krap','op-schema':'Op schema','onbekend':'Onbekend'};
-  var rows=[['Bestelomschrijving','Artikelnr.','Artikelnaam','Klant','Container','Boot','ETD','Orig. ETA','Huidige ETA','Vertraging (d)','Verwachte lossing','Leverdatum klant','Status','Marge','Prioriteit','Commentaar']];
-  data.forEach(function(r){var mg=r.dagenverschil===null?'—':(r.dagenverschil<0?Math.abs(r.dagenverschil)+' d te laat':r.dagenverschil+' d marge');var dl=r._delay===null?'—':(r._delay>0?'+'+r._delay:String(r._delay));rows.push([r['Besteloms.']||'',r['Artikel']||'',r['Art Omschr.']||'',r['Klantnaam']||'',r['Container']||'',r['Boot']||'',r['ETD']||'',r._orig_fmt||'',r['ETA']||'',dl,r._losdate_fmt||'',r['Leverdatum Klant']||'',SL[r.status]||'',mg,r._prio||'',r._comment||'']);});
-  var wb=XLSX.utils.book_new();var ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[18,10,20,22,12,14,10,10,10,10,14,14,10,12,10,22].map(function(w){return{wch:w};});XLSX.utils.book_append_sheet(wb,ws,'Orders');
-  var cpRows=[['Container','Type','Forwarder','Boot','Losdatum','Lostijd','Dag','Dozen','Soorten','Bijzonderheden','Spoed','Loslijst','Bestelomschrijvingen']];
-  cpContainers.forEach(function(c){
-    var sd=getSumatraDataForContainer(c.container);
-    var dozVal=c.dozen!==''&&c.dozen!==null&&c.dozen!==undefined?parseInt(c.dozen||0):sd.dozen;
-    var soortVal=c.soorten!==''&&c.soorten!==null&&c.soorten!==undefined?parseInt(c.soorten||0):sd.soorten;
-    cpRows.push([c.container,c.type,c.forwarder,c.boot,c.datum,c.tijd,c.dag,dozVal,soortVal,c.bijz,c.spoed?'Ja':'Nee',c.loslijst==='klaar'?'Klaar':'Ontbreekt',sd.pills.join(', ')]);
-  });
-  var wsCp=XLSX.utils.aoa_to_sheet(cpRows);wsCp['!cols']=[14,8,12,18,12,8,6,8,8,20,8,10,40].map(function(w){return{wch:w};});XLSX.utils.book_append_sheet(wb,wsCp,'Container planning');
-  XLSX.writeFile(wb,'DP_Factory_Overzicht.xlsx');
-}
 
-function exportPDF(){
-  var data=getExportData();var datum=document.getElementById('topbar-status').textContent;
-  var SL={'te-laat':'Te laat','krap':'Krap','op-schema':'Op schema','onbekend':'Onbekend'};
-  var BC={'te-laat':'background:#FDECEA;color:#C0392B','krap':'background:#FEF5EC;color:#C05A1F','op-schema':'background:#E6F5F4;color:#1B7A72','onbekend':'background:#eee;color:#888'};
-  var PC={'Hoog':'background:#FDECEA;color:#C0392B','Middel':'background:#FEF5EC;color:#C05A1F','Laag':'background:#E6F5F4;color:#1B7A72'};
-  var rijen='';
-  data.forEach(function(r){var mg=r.dagenverschil===null?'—':(r.dagenverschil<0?Math.abs(r.dagenverschil)+' d te laat':r.dagenverschil+' d marge');var dl=r._delay===null?'—':(r._delay>0?'<span style="color:#C0392B;font-weight:600;">+'+r._delay+' d</span>':r._delay<0?'<span style="color:#2A9D8F;font-weight:600;">'+r._delay+' d</span>':'Op tijd');var pr=r._prio?'<span style="padding:1px 6px;border-radius:4px;font-size:8px;font-weight:600;'+(PC[r._prio]||'')+'">'+ r._prio+'</span>':'—';rijen+='<tr><td>'+(r['Besteloms.']||'—')+'</td><td>'+(r['Klantnaam']||'—')+'</td><td>'+(r['Container']||'—')+'</td><td>'+(r['Boot']||'—')+'</td><td>'+(r['ETD']||'—')+'</td><td>'+(r._orig_fmt||'—')+'</td><td>'+(r['ETA']||'—')+'</td><td>'+dl+'</td><td>'+(r._losdate_fmt||'—')+'</td><td>'+(r['Leverdatum Klant']||'—')+'</td><td><span style="padding:2px 7px;border-radius:4px;font-size:8px;font-weight:600;white-space:nowrap;'+(BC[r.status]||'')+'">'+(SL[r.status]||'?')+'</span></td><td>'+pr+'</td><td style="font-size:9px;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(r._comment||'')+'</td></tr>';});
-  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;font-size:9px;padding:14px;background:white;color:#1a1a1a;}@page{size:A4 landscape;margin:.8cm;}.hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #E8734A;}.bars{display:flex;align-items:flex-end;gap:2px;height:20px;}.bars span{width:4px;border-radius:2px 2px 0 0;}.lt{font-size:7px;letter-spacing:.15em;text-transform:uppercase;color:#888;}.lb{font-size:11px;font-weight:700;text-transform:uppercase;color:#0F1C2E;}.sub{font-size:7px;color:#aaa;margin-bottom:8px;}table{width:100%;border-collapse:collapse;table-layout:fixed;}th{font-size:7px;text-transform:uppercase;color:#aaa;padding:4px 5px;border-bottom:2px solid #F2EDE8;text-align:left;white-space:nowrap;background:#FAFAF8;}td{padding:4px 5px;border-bottom:1px solid #F2EDE8;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}tr:nth-child(even) td{background:#faf7f4;}span{-webkit-print-color-adjust:exact;print-color-adjust:exact;}</style></head><body>'
-    +'<div class="hdr"><div class="bars"><span style="height:10px;background:#E8734A;"></span><span style="height:14px;background:#E8734A;opacity:.7"></span><span style="height:20px;background:#1B4F8A;"></span><span style="height:15px;background:#2A9D8F;"></span><span style="height:11px;background:#5BC4D4;"></span></div><div><div class="lt">Dynamic Products</div><div class="lb">Factory — Verzending Orderoverzicht</div></div></div>'
-    +'<div class="sub">'+datum+' | '+data.length+' orders</div>'
-    +'<table><thead><tr><th style="width:12%">Bestelomschrijving</th><th style="width:11%">Klant</th><th style="width:7%">Container</th><th style="width:8%">Boot</th><th style="width:5%">ETD</th><th style="width:6%">Orig. ETA</th><th style="width:6%">Huidige ETA</th><th style="width:6%">Vertraging</th><th style="width:7%">Lossing</th><th style="width:7%">Leverdatum</th><th style="width:7%">Status</th><th style="width:6%">Prioriteit</th><th style="width:12%">Commentaar</th></tr></thead><tbody>'+rijen+'</tbody></table>'
-    +'<script>window.onload=function(){window.print();};<\/script></body></html>';
-  var win=window.open('','_blank');win.document.write(html);win.document.close();
-}
 
 // ── Publiceer — read-only overzicht voor collega's (Home-style) ──
 function publishOverzicht(){
   var now=new Date();
   var datumStr=now.toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   var tijdStr=now.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
+
+  // Herbereken status en marge voor alle orders vlak voor publiceren
+  // zodat de publish altijd synchroon is met de ordertabel.
+  allData.forEach(function(r){
+    r.dagenverschil=calcDagen(r._lev_raw,r._eta_raw);
+    r.status=calcSt(r.dagenverschil,r['Klantnaam']);
+    r.status_order=STO[r.status];
+  });
 
   var data=allData.filter(function(r){return !r._hidden;}).slice().sort(function(a,b){
     var da=a._eta_raw instanceof Date?a._eta_raw.getTime():0;
@@ -3036,8 +3042,9 @@ function publishOverzicht(){
     rows+='<tr class="day-sep"><td colspan="12">'+g.toUpperCase()+' · '+grouped[g].length+' order'+(grouped[g].length!==1?'s':'')+'</td></tr>';
     grouped[g].forEach(function(r){
       var sm2=SM[r.status]||['bg2','?'];
-      var mg=r.dagenverschil===null?{t:'—',c:''}:(r.dagenverschil<0?{t:Math.abs(r.dagenverschil)+' d te laat',c:'neg'}:{t:r.dagenverschil+' d marge',c:r.dagenverschil<=7?'warn':'pos'});
-      var dl=r._delay===null?'—':(r._delay>0?'<span class="delay-pos">+'+r._delay+' d</span>':r._delay<0?'<span class="delay-neg">'+r._delay+' d</span>':'Op tijd');
+      // Zelfde logica als mLabel() in hoofdapp
+      var mg=r.dagenverschil===null?{t:'—',c:''}:(r.dagenverschil>0?{t:r.dagenverschil+' d te laat',c:'neg'}:r.dagenverschil>=-7?{t:Math.abs(r.dagenverschil)+' d marge',c:'warn'}:{t:Math.abs(r.dagenverschil)+' d marge',c:'pos'});
+      var dl=r._delay===null?'—':(r._delay<0?'<span class="delay-pos">'+r._delay+' d</span>':r._delay>0?'<span class="delay-neg">+'+r._delay+' d</span>':'Op tijd');
       var pr=r._prio?'<span class="badge '+(PC[r._prio]||'')+'">'+r._prio+'</span>':'';
       var cp2=getTielLosdatum(String(r['Container']||'').trim());
       var tielCell='—';var tielMs=0;
@@ -3053,12 +3060,12 @@ function publishOverzicht(){
       var levMs=r._lev_raw instanceof Date?r._lev_raw.getTime():0;
       rows+='<tr data-status="'+r.status+'" data-prio="'+(r._prio||'')+'" data-eta="'+(r._eta_raw instanceof Date?r._eta_raw.getTime():0)+'" data-tiel="'+tielMs+'" data-lev="'+levMs+'" data-klant="'+String(r['Klantnaam']||'').trim().replace(/"/g,'&quot;')+'" data-boot="'+String(r['Boot']||'').trim().replace(/"/g,'&quot;')+'" data-container="'+String(r['Container']||'').trim().replace(/"/g,'&quot;')+'" data-artnr="'+String(r['Artikel']||'').toLowerCase().replace(/"/g,'&quot;')+'" data-artikel="'+String(r['Art Omschr.']||'').toLowerCase().replace(/"/g,'&quot;')+'">'
         +'<td class="td-main">'
-          +'<div class="doc-title">'+(r['Besteloms.']||'—')+'</div><div class="doc-sub">'+(r['Art Omschr.']||'—')+'</div>'
+          +'<div class="doc-title">'+esc(r['Besteloms.']||'—')+'</div><div class="doc-sub">'+esc(r['Art Omschr.']||'—')+'</div>'
         +'</td>'
-        +'<td style="font-family:monospace;font-size:11.5px;color:var(--text2,#374151);">'+(r['Artikel']||'—')+'</td>'
-        +'<td>'+(r['Klantnaam']||'—')+'</td>'
-        +'<td><div style="display:flex;flex-direction:column;gap:2px;"><span>'+(r['Boot']||'—')+'</span><span style="color:#9AA1AE;font-size:11.5px;">'+(r['Container']||'—')+'</span></div></td>'
-        +'<td>'+(r['ETA']||'—')+'</td>'
+        +'<td style="font-family:monospace;font-size:11.5px;color:var(--text2,#374151);">'+esc(r['Artikel']||'—')+'</td>'
+        +'<td>'+esc(r['Klantnaam']||'—')+'</td>'
+        +'<td><div style="display:flex;flex-direction:column;gap:2px;"><span>'+esc(r['Boot']||'—')+'</span><span style="color:#9AA1AE;font-size:11.5px;">'+esc(r['Container']||'—')+'</span></div></td>'
+        +'<td>'+esc(r['ETA']||'—')+'</td>'
         +'<td>'+dl+'</td>'
         +'<td>'+tielCell+'</td>'
         +'<td>'+(r['Leverdatum Klant']||'—')+'</td>'
@@ -3344,16 +3351,28 @@ function publishOverzicht(){
     +'var tb=document.querySelector("#order-tbl tbody");'
     +'var rows=Array.from(tb.querySelectorAll("tr:not(.day-sep)"));'
     +'rows.sort(function(a,b){'
-    +'if(ci===3){var va=parseInt(a.dataset.eta||0),vb=parseInt(b.dataset.eta||0);return sortAsc?(va||9e15)-(vb||9e15):(vb||0)-(va||0);}'
-    +'if(ci===5){var va=parseInt(a.dataset.tiel||0),vb=parseInt(b.dataset.tiel||0);return sortAsc?(va||9e15)-(vb||9e15):(vb||0)-(va||0);}'
-    +'if(ci===6){var va=parseInt(a.dataset.lev||0),vb=parseInt(b.dataset.lev||0);return sortAsc?(va||9e15)-(vb||9e15):(vb||0)-(va||0);}'
+    +'if(ci===4){var va=parseInt(a.dataset.eta||0),vb=parseInt(b.dataset.eta||0);return sortAsc?(va||9e15)-(vb||9e15):(vb||9e15)-(va||9e15);}'
+    +'if(ci===6){var va=parseInt(a.dataset.tiel||0),vb=parseInt(b.dataset.tiel||0);return sortAsc?(va||9e15)-(vb||9e15):(vb||9e15)-(va||9e15);}'
+    +'if(ci===7){var va=parseInt(a.dataset.lev||0),vb=parseInt(b.dataset.lev||0);return sortAsc?(va||9e15)-(vb||9e15):(vb||9e15)-(va||9e15);}'
+    +'if(ci===8){var so={"te-laat":0,"krap":1,"op-schema":2,"onbekend":3};var va=so[a.dataset.status]||9,vb=so[b.dataset.status]||9;return sortAsc?va-vb:vb-va;}'
+    +'if(ci===10){var po={"Hoog":0,"Middel":1,"Laag":2};var va=a.dataset.prio in po?po[a.dataset.prio]:9,vb=b.dataset.prio in po?po[b.dataset.prio]:9;return sortAsc?va-vb:vb-va;}'
     +'var va=a.cells[ci]?a.cells[ci].textContent.trim():"",vb=b.cells[ci]?b.cells[ci].textContent.trim():"";'
     +'var na=parseFloat(va.replace(/[^0-9.-]/g,"")),nb=parseFloat(vb.replace(/[^0-9.-]/g,""));'
     +'if(!isNaN(na)&&!isNaN(nb))return sortAsc?na-nb:nb-na;'
     +'return sortAsc?va.localeCompare(vb,"nl"):vb.localeCompare(va,"nl");'
     +'});'
     +'document.querySelectorAll("#tbl-body tr.day-sep").forEach(function(s){s.remove();});'
-    +'rows.forEach(function(r){tb.appendChild(r);});'
+    +'var lastGroup=null;'
+    +'rows.forEach(function(r){'
+    +'if(ci===4){'
+    +'var etaMs=parseInt(r.dataset.eta||0);'
+    +'var today=new Date();today.setHours(0,0,0,0);var todayMs=today.getTime();'
+    +'var diff=etaMs?Math.round((etaMs-todayMs)/86400000):null;'
+    +'var grp=diff===null?"Geen ETA":diff<-7?"Eerder":diff<0?"Vorige week":diff===0?"Vandaag":diff<=7?"Deze week":diff<=14?"Volgende week":diff<=30?"Komende maand":"Later";'
+    +'if(grp!==lastGroup){lastGroup=grp;var sep=document.createElement("tr");sep.className="day-sep";sep.innerHTML="<td colspan=12>"+grp.toUpperCase()+"</td>";tb.appendChild(sep);}'
+    +'}'
+    +'tb.appendChild(r);'
+    +'});'
     +'}'
     +'<\/script></body></html>';
 
@@ -3498,7 +3517,7 @@ function removeInstGroup(gi){if(confirm('Groep verwijderen?')){klantGroepen.spli
 // ── Herbereken alle statussen na groepwijziging ──
 function recomputeAllStatus(){
   allData.forEach(function(r){
-    r.dagenverschil=calcDagen(r._eta_raw,r._lev_raw);
+    r.dagenverschil=calcDagen(r._lev_raw,r._eta_raw);
     r.status=calcSt(r.dagenverschil,r['Klantnaam']);
     r.status_order=STO[r.status];
   });
@@ -3518,8 +3537,13 @@ function recomputeAllStatus(){
       var boot=String(r['Boot']||'').trim();
       var oi=origETAs[boot]||'';
       r._orig_iso=oi; r._orig_fmt=oi?fmtD(oi):'';
+      // Huidige ETA: handmatig heeft prioriteit
+      if(huidigETAs[boot]){
+        var hd2=pD(huidigETAs[boot]);
+        if(hd2){r._eta_raw=hd2;r['ETA']=fmtD(hd2);}
+      }
       var o2=pD(oi);
-      r._delay=(o2&&r._eta_raw)?Math.round((r._eta_raw-o2)/86400000):null;
+      r._delay=(o2&&r._eta_raw)?Math.round((o2-r._eta_raw)/86400000):null;
       var ld=calcLos(r._eta_raw,boot);
       r._losdate=ld; r._losdate_fmt=ld?fmtD(ld):'';
       r._days_until=daysUntil(r._eta_raw);
@@ -3527,12 +3551,12 @@ function recomputeAllStatus(){
       r._comment=meta.comment||r._comment||'';
       r._prio=meta.prio||r._prio||'';
       r._hidden=meta.hidden||r._hidden||false;
-      r.dagenverschil=calcDagen(r._eta_raw,r._lev_raw);
+      r.dagenverschil=calcDagen(r._lev_raw,r._eta_raw);
       r.status=calcSt(r.dagenverschil,r['Klantnaam']);
       r.status_order=STO[r.status];
     });
     populateDDs(); populateCPBootSelect(); render(); renderArchief();
-    ['nav-pub','nav-xl','nav-pdf'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='flex';});
+    ['nav-pub'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='flex';});
     var tb=document.getElementById('trial-banner');if(tb)tb.style.display='none';
   }
   renderStats();renderHome();updateArchBadge();
@@ -3722,8 +3746,9 @@ const GH_DATA_PATH  = 'data/planner.json';
 
 // Metadata-sleutels die via GitHub gesynchroniseerd worden.
 // allData (orders) komt altijd uit Excel en wordt NOOIT via GitHub overschreven.
-const GH_SYNC_KEYS = ['dp5_orig','dp5_meta','dp5_bcom','dp5_blos',
-                       'dp5_arch','dp5_cpcon','dp5_kgrp','dp5_cparch','dp5_data'];
+const GH_SYNC_KEYS = ['dp5_orig','dp5_heta','dp5_meta','dp5_bcom','dp5_blos',
+                       'dp5_arch','dp5_cpcon','dp5_kgrp','dp5_cparch'];
+// dp5_data (allData) wordt NIET via GitHub gesynchroniseerd — die komt altijd vers van Excel-import.
 
 // ── Config ───────────────────────────────────────────────────────
 function ghGetConfig(){
@@ -3822,18 +3847,23 @@ function ghApplyRemote(d){
       var boot=String(r['Boot']||'').trim();
       var oi=origETAs[boot]||'';
       r._orig_iso=oi; r._orig_fmt=oi?fmtD(oi):'';
+      // Huidige ETA: handmatig heeft prioriteit
+      if(huidigETAs[boot]){
+        var hd2=pD(huidigETAs[boot]);
+        if(hd2){r._eta_raw=hd2;r['ETA']=fmtD(hd2);}
+      }
       var o2=pD(oi);
-      r._delay=(o2&&r._eta_raw)?Math.round((r._eta_raw-o2)/86400000):null;
+      r._delay=(o2&&r._eta_raw)?Math.round((o2-r._eta_raw)/86400000):null;
       var ld=calcLos(r._eta_raw,boot);
       r._losdate=ld; r._losdate_fmt=ld?fmtD(ld):'';
       r._days_until=daysUntil(r._eta_raw);
-      r.dagenverschil=calcDagen(r._eta_raw,r._lev_raw);
+      r.dagenverschil=calcDagen(r._lev_raw,r._eta_raw);
       r.status=calcSt(r.dagenverschil,r['Klantnaam']);
       r.status_order=STO[r.status];
     });
     if(typeof populateDDs === 'function') populateDDs();
     if(typeof populateCPBootSelect === 'function') populateCPBootSelect();
-    ['nav-pub','nav-xl','nav-pdf'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='flex';});
+    ['nav-pub'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='flex';});
     var tb=document.getElementById('trial-banner');if(tb)tb.style.display='none';
   }
   // Herrender — allData is ongewijzigd, render gebruikt het gewoon opnieuw
@@ -3978,68 +4008,7 @@ if(document.readyState !== 'loading') ghInitUI();
 
 
 // ── LEVERDATUM CONFLICT SYSTEEM ────────────────────────────────────────────
-var _lcPendingConflicts = []; // [{key, order, klant, manualIso, importIso, rowIdx}]
-var _lcChoices = {};          // key → 'import' | 'manual'
-var _lcPendingFinish = null;  // callback na keuze
-
-function lcShowConflicts(conflicts, onFinish) {
-  _lcPendingConflicts = conflicts;
-  _lcChoices = {};
-  _lcPendingFinish = onFinish;
-
-  // Default: behoud handmatige datum
-  conflicts.forEach(function(c){ _lcChoices[c.key] = 'manual'; });
-
-  var tbody = document.getElementById('lc-tbody');
-  var mo = ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
-  function fmt(iso){ if(!iso)return '—'; var d=new Date(iso); return d.getDate()+' '+mo[d.getMonth()]+' '+d.getFullYear(); }
-
-  tbody.innerHTML = conflicts.map(function(c, i){
-    var manD = new Date(c.manualIso), impD = new Date(c.importIso);
-    var diff = Math.round((impD - manD) / 86400000);
-    var diffHtml = diff === 0 ? '' : '<span class="lc-diff-badge '+(diff>0?'plus':'minus')+'">'+(diff>0?'+':'')+diff+' d</span>';
-    return '<tr id="lc-row-'+i+'">'
-      +'<td style="font-size:11px;color:var(--text3);">'+c.order+'</td>'
-      +'<td style="font-weight:500;">'+c.klant+'</td>'
-      +'<td style="color:var(--green);font-weight:500;">'+fmt(c.manualIso)+'</td>'
-      +'<td style="color:var(--accent);font-weight:500;">'+fmt(c.importIso)+'</td>'
-      +'<td>'+diffHtml+'</td>'
-      +'<td><div class="lc-radio-group">'
-        +'<label class="lc-radio manual sel" id="lc-m-'+i+'" onclick="lcChoose(\''+c.key.replace(/'/g,"\\'")+"','manual',"+i+')">'
-          +'✎ Handmatig'
-        +'</label>'
-        +'<label class="lc-radio import" id="lc-i-'+i+'" onclick="lcChoose(\''+c.key.replace(/'/g,"\\'")+"','import',"+i+')">'
-          +'↓ Import'
-        +'</label>'
-      +'</div></td>'
-    +'</tr>';
-  }).join('');
-
-  document.getElementById('lc-count-lbl').textContent = conflicts.length + ' conflict' + (conflicts.length !== 1 ? 'en' : '');
-  document.getElementById('lev-conflict-modal').className = 'open';
-}
-
-function lcChoose(key, choice, i){
-  _lcChoices[key] = choice;
-  document.getElementById('lc-m-'+i).className = 'lc-radio manual' + (choice==='manual'?' sel':'');
-  document.getElementById('lc-i-'+i).className = 'lc-radio import' + (choice==='import'?' sel':'');
-}
-
-function lcSelectAll(choice){
-  _lcPendingConflicts.forEach(function(c, i){ lcChoose(c.key, choice, i); });
-}
-
-function lcDismiss(){
-  // Annuleer: behoud alle handmatige datums (keuze 'manual' voor iedereen)
-  _lcPendingConflicts.forEach(function(c){ _lcChoices[c.key] = 'manual'; });
-  lcApply();
-}
-
-function lcApply(){
-  document.getElementById('lev-conflict-modal').className = '';
-  if(_lcPendingFinish) _lcPendingFinish(_lcChoices);
-  _lcPendingConflicts = []; _lcChoices = {}; _lcPendingFinish = null;
-}
-// ───────────────────────────────────────────────────────────────────────────
 
 </script>
+</body>
+</html>
