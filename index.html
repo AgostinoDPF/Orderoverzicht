@@ -799,6 +799,9 @@ input[type=checkbox]{width:15px;height:15px;accent-color:var(--accent);cursor:po
 .mini-time{width:80px;}
 .mini-date:focus,.mini-time:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,135,84,.12);}
 .save-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);cursor:pointer;flex-shrink:0;}
+.btn-danger{background:#FCEBEA;border:1px solid #F1C7C3;color:#B23A33;padding:8px 16px;border-radius:var(--r2);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;transition:all .12s;}
+.btn-danger:hover{background:#f1c7c3;border-color:#C5443C;}
+.danger-section{background:#FEF7F6;border:1px solid #F1C7C3;border-radius:8px;padding:18px 20px;}
 .save-dot:hover{background:var(--accent-dark);}
 .tog-track{width:30px;height:16px;border-radius:99px;background:var(--border2);position:relative;cursor:pointer;display:inline-block;transition:background .15s;}
 .tog-track.on{background:var(--red);}
@@ -1427,6 +1430,17 @@ sectie                            ║
             <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">Ontbrekende leverdatum</div>
             <div style="font-size:11px;color:var(--text3);margin-bottom:12px;">Orders zonder leverdatum krijgen status "onbekend" en worden niet meegeteld in de statusfilters. Het aantal wordt zichtbaar in de toolbar.</div>
             <div style="font-size:12px;color:var(--text2);">Gebruik de knop <strong>⚠ Geen leverdatum</strong> in de Orders toolbar om deze orders te filteren.</div>
+          </div>
+
+          <!-- Data wissen -->
+          <div class="danger-section">
+            <div style="font-size:13px;font-weight:700;color:#B23A33;margin-bottom:4px;">⚠ Alle data wissen</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:14px;">Verwijdert alle orders, container planning, archieven en instellingen uit de browser. Dit kan niet ongedaan worden gemaakt. Maak eerst een backup via <strong>Data bewaren</strong>.</div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+              <button class="btn-danger" onclick="wisAlleData()">🗑 Alle data wissen</button>
+              <span style="font-size:11px;color:var(--text3);">Of wis alleen de orders:</span>
+              <button class="btn-danger" onclick="wisAlleenOrders()">🗑 Alleen orders wissen</button>
+            </div>
           </div>
 
         </div>
@@ -3512,6 +3526,25 @@ function instGroupName(gi,v){klantGroepen[gi].naam=v;saveStorage();}
 function instGroupVal(gi,field,v){klantGroepen[gi][field]=parseInt(v)||0;saveStorage();if(allData.length)recomputeAllStatus();}
 function instGroupKlanten(gi,v){klantGroepen[gi].klanten=v.split('\n').map(function(s){return s.trim();}).filter(Boolean);saveStorage();if(allData.length)recomputeAllStatus();}
 function addInstGroup(){klantGroepen.push({naam:'Nieuwe groep',klanten:[],telaat:-7,krap:0});saveStorage();renderInstellingen();}
+function wisAlleData(){
+  if(!confirm('Weet je zeker dat je ALLE data wilt wissen? Orders, containers, archieven en instellingen worden verwijderd. Dit kan niet ongedaan worden gemaakt.'))return;
+  ['dp5_orig','dp5_heta','dp5_meta','dp5_bcom','dp5_blos','dp5_arch','dp5_cpcon','dp5_kgrp','dp5_cparch','dp5_data'].forEach(function(k){localStorage.removeItem(k);});
+  allData=[];orderMeta={};origETAs={};huidigETAs={};boatComments={};boatLos={};archivedOrders={};cpContainers=[];cpArchivedContainers=[];
+  klantGroepen=[{naam:'AS Watson',klanten:['Kruidvat','Trekpleister','ICI Paris XL','Sacha','AS Watson'],telaat:0,krap:-7}];
+  selIdx.clear();
+  renderStats();render();renderHome();renderBoats();renderCP();renderArchief();renderCPArchief();updateArchBadge();renderInstellingen();
+  document.getElementById('topbar-status').textContent='Data gewist — importeer een nieuw Sumatra bestand';
+  showNotif('&#10003; Alle data gewist');
+}
+function wisAlleenOrders(){
+  if(!confirm('Weet je zeker dat je alle orders wilt wissen? Container planning en instellingen blijven bewaard.'))return;
+  allData=[];orderMeta={};origETAs={};huidigETAs={};archivedOrders={};
+  localStorage.removeItem('dp5_data');localStorage.removeItem('dp5_meta');localStorage.removeItem('dp5_orig');localStorage.removeItem('dp5_heta');localStorage.removeItem('dp5_arch');
+  selIdx.clear();
+  renderStats();render();renderHome();renderBoats();updateArchBadge();
+  document.getElementById('topbar-status').textContent='Orders gewist — importeer een nieuw Sumatra bestand';
+  showNotif('&#10003; Orders gewist');
+}
 function removeInstGroup(gi){if(confirm('Groep verwijderen?')){klantGroepen.splice(gi,1);saveStorage();renderInstellingen();if(allData.length)recomputeAllStatus();}}
 
 // ── Herbereken alle statussen na groepwijziging ──
