@@ -2964,7 +2964,7 @@ function publishOverzicht(){
   var rows='';
   groupOrder.forEach(function(g){
     if(!grouped[g])return;
-    rows+='<tr class="day-sep"><td colspan="11">'+g.toUpperCase()+' · '+grouped[g].length+' order'+(grouped[g].length!==1?'s':'')+'</td></tr>';
+    rows+='<tr class="day-sep"><td colspan="12">'+g.toUpperCase()+' · '+grouped[g].length+' order'+(grouped[g].length!==1?'s':'')+'</td></tr>';
     grouped[g].forEach(function(r){
       var sm2=SM[r.status]||['bg2','?'];
       var mg=r.dagenverschil===null?{t:'—',c:''}:(r.dagenverschil<0?{t:Math.abs(r.dagenverschil)+' d te laat',c:'neg'}:{t:r.dagenverschil+' d marge',c:r.dagenverschil<=7?'warn':'pos'});
@@ -2986,6 +2986,7 @@ function publishOverzicht(){
         +'<td class="td-main">'
           +'<div class="doc-title">'+(r['Besteloms.']||'—')+'</div><div class="doc-sub">'+(r['Art Omschr.']||'—')+'</div>'
         +'</td>'
+        +'<td style="font-family:monospace;font-size:11.5px;color:var(--text2,#374151);">'+(r['Artikel']||'—')+'</td>'
         +'<td>'+(r['Klantnaam']||'—')+'</td>'
         +'<td><div style="display:flex;flex-direction:column;gap:2px;"><span>'+(r['Boot']||'—')+'</span><span style="color:#9AA1AE;font-size:11.5px;">'+(r['Container']||'—')+'</span></div></td>'
         +'<td>'+(r['ETA']||'—')+'</td>'
@@ -3212,15 +3213,16 @@ function publishOverzicht(){
         +'<div class="tw"><table id="order-tbl">'
         +'<thead><tr>'
         +'<th onclick="sortTbl(0)">Order</th>'
-        +'<th onclick="sortTbl(1)">Klant</th>'
-        +'<th onclick="sortTbl(2)">Boot / container</th>'
-        +'<th onclick="sortTbl(3)">ETA</th>'
-        +'<th onclick="sortTbl(4)">Vertraging</th>'
-        +'<th onclick="sortTbl(5)">Lossen Tiel</th>'
-        +'<th onclick="sortTbl(6)">Aan klant</th>'
-        +'<th onclick="sortTbl(7)">Status</th>'
-        +'<th onclick="sortTbl(8)">Marge</th>'
-        +'<th onclick="sortTbl(9)">Prioriteit</th>'
+        +'<th onclick="sortTbl(1)">Artikelnr.</th>'
+        +'<th onclick="sortTbl(2)">Klant</th>'
+        +'<th onclick="sortTbl(3)">Boot / container</th>'
+        +'<th onclick="sortTbl(4)">ETA</th>'
+        +'<th onclick="sortTbl(5)">Vertraging</th>'
+        +'<th onclick="sortTbl(6)">Lossen Tiel</th>'
+        +'<th onclick="sortTbl(7)">Aan klant</th>'
+        +'<th onclick="sortTbl(8)">Status</th>'
+        +'<th onclick="sortTbl(9)">Marge</th>'
+        +'<th onclick="sortTbl(10)">Prioriteit</th>'
         +'<th>Commentaar</th>'
         +'</tr></thead>'
         +'<tbody id="tbl-body">'+rows+'</tbody>'
