@@ -1592,7 +1592,7 @@ function pD(v){
   if(!isNaN(n)&&n>1000){
     var d2=new Date(Math.round((n-25569)*86400000));
     // Excel serial is UTC-based; adjust to local midnight
-    var d3=new Date(d2.getUTCFullYear(),d2.getUTCMonth(),d2.getUTCDate());
+    var d3=new Date(d2.getFullYear(),d2.getMonth(),d2.getDate());
     if(!isNaN(d3))return d3;
   }
   return null;
@@ -1603,7 +1603,7 @@ function toISO(d){if(!d)return '';return d.getFullYear()+'-'+String(d.getMonth()
 function addDays(d,n){var r=new Date(d);r.setDate(r.getDate()+n);return r;}
 // SheetJS cellDates:true geeft UTC-midnight Date objecten. Zet om naar lokale midnight
 // zodat datumvergelijkingen geen tijdzone-offset bevatten.
-function toLocalMidnight(d){if(!d||!(d instanceof Date)||isNaN(d))return d;return new Date(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate());}
+function toLocalMidnight(d){if(!d||!(d instanceof Date)||isNaN(d))return d;return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
 function daysUntil(d){var t=new Date();t.setHours(0,0,0,0);return d?Math.round((d-t)/86400000):null;}
 function calcDagen(a,b){
   var e=a instanceof Date?a:pD(a);
@@ -1731,7 +1731,7 @@ function processData(rows,fname){
       out._eta_raw=toLocalMidnight(r['ETA'] instanceof Date?r['ETA']:pD(r['ETA']));
       out._lev_raw=toLocalMidnight(r['Leverdatum Klant'] instanceof Date?r['Leverdatum Klant']:pD(r['Leverdatum Klant']));
       out._etd_raw=toLocalMidnight(r['ETD'] instanceof Date?r['ETD']:pD(r['ETD']));
-      out['ETA']=fmtD(r['ETA']);out['ETD']=fmtD(r['ETD']);out['Leverdatum Klant']=fmtD(r['Leverdatum Klant']);
+      out['ETA']=fmtD(out._eta_raw||r['ETA']);out['ETD']=fmtD(out._etd_raw||r['ETD']);out['Leverdatum Klant']=fmtD(out._lev_raw||r['Leverdatum Klant']);
       var boot=String(r['Boot']||'').trim();
       // Orig. ETA: eerste keer automatisch instellen op import-ETA
       if(!origETAs[boot]&&out._eta_raw){
