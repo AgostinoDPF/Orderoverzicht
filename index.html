@@ -816,7 +816,7 @@ input[type=checkbox]{width:15px;height:15px;accent-color:var(--accent);cursor:po
 .cp-expbar .btn-ghost{background:transparent;color:var(--accent);border:1px solid var(--accent-soft2);padding:6px 12px;border-radius:6px;font-family:var(--font);font-size:12px;cursor:pointer;}
 .cp-expbar .btn-ghost:hover{background:#fff;}
 .cp-chk{accent-color:var(--accent);width:14px;height:14px;cursor:pointer;vertical-align:middle;}
-.cp-chk-th{display:flex;align-items:center;justify-content:center;}
+.cp-chk-th{text-align:center;vertical-align:middle;padding:0 8px !important;}
 
 /* ── MODAL ─────────────────────────────────── */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(26,31,46,.45);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
@@ -986,6 +986,30 @@ sectie                            ║
   line-height:1.8;
 }
 .gh-steps strong { color:var(--text); }
+
+/* ── LEVERDATUM CONFLICT MODAL ─────────────────────────── */
+#lev-conflict-modal{display:none;position:fixed;inset:0;background:rgba(17,24,39,.55);z-index:9999;align-items:flex-start;justify-content:center;padding-top:60px;backdrop-filter:blur(3px);}
+#lev-conflict-modal.open{display:flex;}
+.lc-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;width:780px;max-width:96vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.18);}
+.lc-head{padding:20px 24px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.lc-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.lc-sub{font-size:12px;color:var(--text3);line-height:1.5;}
+.lc-toolbar{padding:10px 24px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;flex-shrink:0;background:var(--bg3);}
+.lc-scroll{overflow-y:auto;flex:1;}
+.lc-table{width:100%;border-collapse:collapse;}
+.lc-table th{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding:8px 14px;text-align:left;border-bottom:1px solid var(--border);background:var(--bg3);white-space:nowrap;position:sticky;top:0;}
+.lc-table td{padding:9px 14px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);vertical-align:middle;}
+.lc-table tr:last-child td{border-bottom:none;}
+.lc-table tr:hover td{background:#F8FAFE;}
+.lc-radio-group{display:flex;gap:6px;align-items:center;}
+.lc-radio{display:flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;border:1px solid var(--border2);cursor:pointer;font-size:11px;font-weight:500;color:var(--text3);transition:all .12s;white-space:nowrap;}
+.lc-radio input{display:none;}
+.lc-radio.import.sel{background:#EFF6FF;border-color:#BFDBFE;color:var(--accent);}
+.lc-radio.manual.sel{background:#F0FDF4;border-color:#BBF7D0;color:var(--green);}
+.lc-foot{padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;background:var(--bg3);}
+.lc-diff-badge{display:inline-block;padding:1px 7px;border-radius:99px;font-size:10px;font-weight:600;}
+.lc-diff-badge.plus{background:#FEF2F2;color:var(--red);border:1px solid #FECACA;}
+.lc-diff-badge.minus{background:#F0FDF4;color:var(--green);border:1px solid #BBF7D0;}
 </style>
 </head>
 <body>
@@ -1689,33 +1713,72 @@ function processData(rows,fname){
   var archived=0;
   allData.forEach(function(r){if(!newKeys.has(r._key)&&!archivedOrders[r._key]){archivedOrders[r._key]=Object.assign({},r,{_arch_reden:'Automatisch — niet meer in import',_arch_datum:new Date().toLocaleDateString('nl-NL',{day:'2-digit',month:'2-digit',year:'numeric'})});archived++;}});
   if(archived)saveStorage();
-  allData=rows.map(function(r){
-    if(!String(r['Container']||'').trim())return null;
-    if(String(r['Klantnaam']||'').trim()==='Action Service & Distributie B.V. (NL)')return null;
-    var out=Object.assign({},r);
-    out._eta_raw=r['ETA'] instanceof Date?r['ETA']:pD(r['ETA']);
-    out._lev_raw=r['Leverdatum Klant'] instanceof Date?r['Leverdatum Klant']:pD(r['Leverdatum Klant']);
-    out._etd_raw=r['ETD'] instanceof Date?r['ETD']:pD(r['ETD']);
-    out['ETA']=fmtD(r['ETA']);out['ETD']=fmtD(r['ETD']);out['Leverdatum Klant']=fmtD(r['Leverdatum Klant']);
-    var boot=String(r['Boot']||'').trim();
-    var oi=origETAs[boot]||'';out._orig_iso=oi;out._orig_fmt=oi?fmtD(oi):'';
-    var o2=pD(oi);out._delay=(o2&&out._eta_raw)?Math.round((out._eta_raw-o2)/86400000):null;
-    var ld=calcLos(out._eta_raw,boot);out._losdate=ld;out._losdate_fmt=ld?fmtD(ld):'';
-    out._days_until=daysUntil(out._eta_raw);
-    var key=okey(out);out._key=key;
-    var meta=orderMeta[key]||{};
-    out._comment=meta.comment||'';out._prio=meta.prio||'';out._hidden=meta.hidden||false;out._manual_lev=false;
-    if(!out._lev_raw&&meta.leverdatum){out._lev_raw=pD(meta.leverdatum);out['Leverdatum Klant']=fmtD(meta.leverdatum);out._manual_lev=true;}
-    out.dagenverschil=calcDagen(out._eta_raw,out._lev_raw);out.status=calcSt(out.dagenverschil,r['Klantnaam']);out.status_order=STO[out.status];
-    // Auto-prioriteit: op-schema zonder handmatige prio → Laag
-    if(out.status==='op-schema'&&!out._prio){
-      out._prio='Laag';
-      orderMeta[key]=orderMeta[key]||{};
-      if(!orderMeta[key].prio)orderMeta[key].prio='Laag';
+
+  // ── Detecteer leverdatum conflicten vóór verwerken ────────────────────
+  var conflicts = [];
+  rows.forEach(function(r){
+    if(!String(r['Container']||'').trim())return;
+    if(String(r['Klantnaam']||'').trim()==='Action Service & Distributie B.V. (NL)')return;
+    var key = okey(r);
+    var meta = orderMeta[key]||{};
+    if(!meta.leverdatum)return; // geen handmatige datum → geen conflict
+    var importLev = r['Leverdatum Klant'] instanceof Date ? r['Leverdatum Klant'] : pD(r['Leverdatum Klant']);
+    if(!importLev)return; // import heeft geen leverdatum → geen conflict
+    var importIso = toISO(importLev);
+    if(importIso === meta.leverdatum)return; // zelfde → geen conflict
+    conflicts.push({
+      key: key,
+      order: String(r['Besteloms.']||'').trim().substring(0,20),
+      klant: String(r['Klantnaam']||'').trim().split(' ').slice(0,3).join(' '),
+      manualIso: meta.leverdatum,
+      importIso: importIso,
+    });
+  });
+
+  // ── Verwerk daadwerkelijk (met keuzes) ───────────────────────────────
+  function doProcess(choices){
+    // Pas choices toe: update orderMeta voor orders waarbij 'import' gekozen is
+    if(choices){
+      Object.keys(choices).forEach(function(key){
+        if(choices[key]==='import'){
+          // Verwijder handmatige datum → import datum wordt gebruikt
+          if(orderMeta[key]) delete orderMeta[key].leverdatum;
+        }
+        // 'manual': niets doen, meta.leverdatum blijft bewaard
+      });
     }
-    if(archivedOrders[key])delete archivedOrders[key];
-    return out;
-  }).filter(Boolean);
+
+    allData=rows.map(function(r){
+      if(!String(r['Container']||'').trim())return null;
+      if(String(r['Klantnaam']||'').trim()==='Action Service & Distributie B.V. (NL)')return null;
+      var out=Object.assign({},r);
+      out._eta_raw=r['ETA'] instanceof Date?r['ETA']:pD(r['ETA']);
+      out._lev_raw=r['Leverdatum Klant'] instanceof Date?r['Leverdatum Klant']:pD(r['Leverdatum Klant']);
+      out._etd_raw=r['ETD'] instanceof Date?r['ETD']:pD(r['ETD']);
+      out['ETA']=fmtD(r['ETA']);out['ETD']=fmtD(r['ETD']);out['Leverdatum Klant']=fmtD(r['Leverdatum Klant']);
+      var boot=String(r['Boot']||'').trim();
+      var oi=origETAs[boot]||'';out._orig_iso=oi;out._orig_fmt=oi?fmtD(oi):'';
+      var o2=pD(oi);out._delay=(o2&&out._eta_raw)?Math.round((out._eta_raw-o2)/86400000):null;
+      var ld=calcLos(out._eta_raw,boot);out._losdate=ld;out._losdate_fmt=ld?fmtD(ld):'';
+      out._days_until=daysUntil(out._eta_raw);
+      var key=okey(out);out._key=key;
+      var meta=orderMeta[key]||{};
+      out._comment=meta.comment||'';out._prio=meta.prio||'';out._hidden=meta.hidden||false;out._manual_lev=false;
+      if(!out._lev_raw&&meta.leverdatum){out._lev_raw=pD(meta.leverdatum);out['Leverdatum Klant']=fmtD(meta.leverdatum);out._manual_lev=true;}
+      else if(out._lev_raw&&meta.leverdatum){
+        // Handmatige datum behouden (import keuze werd al verwerkt hierboven)
+        out._lev_raw=pD(meta.leverdatum);out['Leverdatum Klant']=fmtD(meta.leverdatum);out._manual_lev=true;
+      }
+      out.dagenverschil=calcDagen(out._eta_raw,out._lev_raw);out.status=calcSt(out.dagenverschil,r['Klantnaam']);out.status_order=STO[out.status];
+      // Auto-prioriteit: op-schema zonder handmatige prio → Laag
+      if(out.status==='op-schema'&&!out._prio){
+        out._prio='Laag';
+        orderMeta[key]=orderMeta[key]||{};
+        if(!orderMeta[key].prio)orderMeta[key].prio='Laag';
+      }
+      if(archivedOrders[key])delete archivedOrders[key];
+      return out;
+    }).filter(Boolean);
   // Auto-sync containers uit Sumatra import
   var bestaand=new Set(cpContainers.map(function(c){return c.container;}));
   var nieuw=0;
@@ -1728,7 +1791,7 @@ function processData(rows,fname){
   Object.keys(bootPerContainer).forEach(function(cont){
     if(!bestaand.has(cont)){
       var info=bootPerContainer[cont];
-      cpContainers.push({container:cont,type:info.type,forwarder:'',boot:info.boot,datum:'',tijd:'08:00',dag:'',dozen:'',soorten:'',bijz:'',spoed:false,loslijst:'ontbreekt'});
+      cpContainers.push({container:cont,type:info.type,forwarder:'',boot:info.boot,datum:'',tijd:'08:00',dag:'',dozen:'',soorten:'',bijz:'',spoed:false,loslijst:'ontbreekt',documenten:'ontbreekt',telexrelease:'ontbreekt'});
       nieuw++;
     }
   });
@@ -1738,23 +1801,25 @@ function processData(rows,fname){
     var heeftActief=allData.some(function(r){return String(r['Container']||'').trim()===contNr;});
     var heeftGelost=cpArchivedContainers.some(function(a){return a.container===contNr;});
     if(!heeftActief&&!heeftGelost&&bestaand.has(contNr)){
-      // Alle orders verdwenen uit import → archiveer container automatisch
       archiveerContainer(contNr,'Automatisch — alle orders gearchiveerd',false);
     }
   });
   if(nieuw>0)saveStorage();
-  // Bewaar de net-geïmporteerde orders zodat ze een refresh / herstart
-  // overleven en gesynct kunnen worden naar GitHub.
   saveStorage();
-
   selIdx.clear();
   document.getElementById('topbar-status').textContent='Geladen: '+fname+(archived?' | '+archived+' gearchiveerd':'')+(nieuw?' | '+nieuw+' containers toegevoegd':'');
-
   ['nav-pub','nav-xl','nav-pdf'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='flex';});
-  // hide trial banner once data loaded
   var tb=document.getElementById('trial-banner');if(tb)tb.style.display='none';
   populateDDs();populateCPBootSelect();renderStats();render();renderArchief();renderHome();
   if(curTab==='b')renderBoats();if(curTab==='cp')renderCP();
+  } // end doProcess
+
+  // ── Toon conflictmodal of verwerk direct ─────────────────────────────
+  if(conflicts.length > 0){
+    lcShowConflicts(conflicts, function(choices){ doProcess(choices); });
+  } else {
+    doProcess(null);
+  }
 }
 
 function populateDDs(){
@@ -2236,6 +2301,8 @@ function cpToggleSpoed(idx){
   saveStorage();renderCP();renderStats();
 }
 function cpToggleLoslijst(idx){cpContainers[idx].loslijst=cpContainers[idx].loslijst==='klaar'?'ontbreekt':'klaar';saveStorage();renderCP();renderStats();}
+function cpToggleDocumenten(idx){cpContainers[idx].documenten=cpContainers[idx].documenten==='klaar'?'ontbreekt':'klaar';saveStorage();renderCP();}
+function cpToggleTelexrelease(idx){cpContainers[idx].telexrelease=cpContainers[idx].telexrelease==='klaar'?'ontbreekt':'klaar';saveStorage();renderCP();}
 
 function cpUpdateNum(idx,field,val){
   if(idx<0||idx>=cpContainers.length)return;
@@ -2371,6 +2438,8 @@ function renderCP(){
         +'<th style="width:60px;">Soorten</th>'
         +'<th style="width:105px;">Bijzonderheden</th>'
         +'<th style="width:48px;">Spoed</th>'
+        +'<th style="width:70px;">Documenten</th>'
+        +'<th style="width:80px;">Telex release</th>'
         +'<th style="width:75px;">Loslijst</th>'
         +'<th>Bestelomschrijvingen</th>'
         +'<th style="width:40px;"></th>'
@@ -2478,7 +2547,7 @@ function renderCP(){
           +'<td>'+soortCell+'</td>'
           +'<td style="color:'+(c.bijz?'#C05A1F':'var(--text3)')+';">'+(c.bijz||'—')+'</td>'
           +'<td><div class="tog-track'+(c.spoed?' on':'')+'" onclick="cpToggleSpoed('+cidx+')"><div class="tog-knob"></div></div></td>'
-          +'<td>'+losTog+'</td>'
+          +(function(){var dk=c.documenten==='klaar';return '<td><div style="display:flex;align-items:center;gap:6px;">'+'<div class="tog-track'+(dk?' on-green':'')+'" onclick="cpToggleDocumenten('+cidx+')" title="'+(dk?'Klaar — klik om te wisselen':'Ontbreekt — klik om te wisselen')+'"><div class="tog-knob"></div></div>'+'<span style="font-size:10px;color:'+(dk?'#1B7A72':'#C0392B')+';font-weight:600;">'+(dk?'Klaar':'Ontbreekt')+'</span>'+'</div></td>';})()+(function(){var tk=c.telexrelease==='klaar';return '<td><div style="display:flex;align-items:center;gap:6px;">'+'<div class="tog-track'+(tk?' on-green':'')+'" onclick="cpToggleTelexrelease('+cidx+')" title="'+(tk?'Klaar — klik om te wisselen':'Ontbreekt — klik om te wisselen')+'"><div class="tog-knob"></div></div>'+'<span style="font-size:10px;color:'+(tk?'#1B7A72':'#C0392B')+';font-weight:600;">'+(tk?'Klaar':'Ontbreekt')+'</span>'+'</div></td>';})()+'<td>'+losTog+'</td>'
           +'<td style="white-space:normal;">'+pillsHtml+'</td>'
           +'<td style="white-space:nowrap;">'
           +'<button class="cp-act-btn" onclick="openCPEditModal('+cidx+')" title="Bewerken">&#9998;</button> '
@@ -3907,7 +3976,70 @@ document.addEventListener('DOMContentLoaded', ghInitUI);
 if(document.readyState !== 'loading') ghInitUI();
 
 
+
+// ── LEVERDATUM CONFLICT SYSTEEM ────────────────────────────────────────────
+var _lcPendingConflicts = []; // [{key, order, klant, manualIso, importIso, rowIdx}]
+var _lcChoices = {};          // key → 'import' | 'manual'
+var _lcPendingFinish = null;  // callback na keuze
+
+function lcShowConflicts(conflicts, onFinish) {
+  _lcPendingConflicts = conflicts;
+  _lcChoices = {};
+  _lcPendingFinish = onFinish;
+
+  // Default: behoud handmatige datum
+  conflicts.forEach(function(c){ _lcChoices[c.key] = 'manual'; });
+
+  var tbody = document.getElementById('lc-tbody');
+  var mo = ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+  function fmt(iso){ if(!iso)return '—'; var d=new Date(iso); return d.getDate()+' '+mo[d.getMonth()]+' '+d.getFullYear(); }
+
+  tbody.innerHTML = conflicts.map(function(c, i){
+    var manD = new Date(c.manualIso), impD = new Date(c.importIso);
+    var diff = Math.round((impD - manD) / 86400000);
+    var diffHtml = diff === 0 ? '' : '<span class="lc-diff-badge '+(diff>0?'plus':'minus')+'">'+(diff>0?'+':'')+diff+' d</span>';
+    return '<tr id="lc-row-'+i+'">'
+      +'<td style="font-size:11px;color:var(--text3);">'+c.order+'</td>'
+      +'<td style="font-weight:500;">'+c.klant+'</td>'
+      +'<td style="color:var(--green);font-weight:500;">'+fmt(c.manualIso)+'</td>'
+      +'<td style="color:var(--accent);font-weight:500;">'+fmt(c.importIso)+'</td>'
+      +'<td>'+diffHtml+'</td>'
+      +'<td><div class="lc-radio-group">'
+        +'<label class="lc-radio manual sel" id="lc-m-'+i+'" onclick="lcChoose(\''+c.key.replace(/'/g,"\\'")+"','manual',"+i+')">'
+          +'✎ Handmatig'
+        +'</label>'
+        +'<label class="lc-radio import" id="lc-i-'+i+'" onclick="lcChoose(\''+c.key.replace(/'/g,"\\'")+"','import',"+i+')">'
+          +'↓ Import'
+        +'</label>'
+      +'</div></td>'
+    +'</tr>';
+  }).join('');
+
+  document.getElementById('lc-count-lbl').textContent = conflicts.length + ' conflict' + (conflicts.length !== 1 ? 'en' : '');
+  document.getElementById('lev-conflict-modal').className = 'open';
+}
+
+function lcChoose(key, choice, i){
+  _lcChoices[key] = choice;
+  document.getElementById('lc-m-'+i).className = 'lc-radio manual' + (choice==='manual'?' sel':'');
+  document.getElementById('lc-i-'+i).className = 'lc-radio import' + (choice==='import'?' sel':'');
+}
+
+function lcSelectAll(choice){
+  _lcPendingConflicts.forEach(function(c, i){ lcChoose(c.key, choice, i); });
+}
+
+function lcDismiss(){
+  // Annuleer: behoud alle handmatige datums (keuze 'manual' voor iedereen)
+  _lcPendingConflicts.forEach(function(c){ _lcChoices[c.key] = 'manual'; });
+  lcApply();
+}
+
+function lcApply(){
+  document.getElementById('lev-conflict-modal').className = '';
+  if(_lcPendingFinish) _lcPendingFinish(_lcChoices);
+  _lcPendingConflicts = []; _lcChoices = {}; _lcPendingFinish = null;
+}
+// ───────────────────────────────────────────────────────────────────────────
+
 </script>
-
-
-</body></html>
