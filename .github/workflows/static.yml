@@ -46,7 +46,7 @@ jobs:
           import re
           f = 'test/index.html'
           html = open(f, encoding='utf-8').read()
-          b = '<div id=\"test-banner\" style=\"position:fixed;top:0;left:0;right:0;z-index:99999;background:#F59E0B;color:#fff;text-align:center;padding:9px 16px;font-size:13px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.15);\">TEST OMGEVING \xe2\x80\x94 wijzigingen hier zijn NIET live in productie</div>'
+          b = '<div id=\"test-banner\" style=\"position:fixed;top:0;left:0;right:0;z-index:99999;background:#F59E0B;color:#fff;text-align:center;padding:9px 16px;font-size:13px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.15);\">TEST OMGEVING — wijzigingen hier zijn NIET live in productie</div>'
           html = re.sub(r'(<body[^>]*>)', lambda m: m.group(0) + b, html, 1)
           open(f, 'w', encoding='utf-8').write(html)
           print('TEST banner toegevoegd aan', f)
