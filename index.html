@@ -667,12 +667,10 @@ input[type=checkbox]{width:15px;height:15px;accent-color:var(--accent);cursor:po
 .qa-card.green{background:var(--pastel-green);}
 .qa-card.peach{background:var(--pastel-peach);}
 .qa-card.lavender{background:var(--pastel-lavender);}
-.qa-card.red{background:#FCEBEA;}
 .qa-ill{width:60px;height:60px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
 .qa-card.green .qa-ill{background:rgba(91,174,125,.18);}
 .qa-card.peach .qa-ill{background:rgba(232,156,94,.18);}
 .qa-card.lavender .qa-ill{background:rgba(155,122,194,.18);}
-.qa-card.red .qa-ill{background:rgba(178,58,51,.14);}
 .qa-body{flex:1;min-width:0;}
 .qa-title{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.01em;line-height:1.25;margin-bottom:6px;}
 .qa-desc{font-size:13px;color:var(--text2);line-height:1.45;}
@@ -1016,7 +1014,6 @@ sectie                            ║
   <div class="topbar-right">
     <input type="file" id="file-input" accept=".xlsx,.xls" style="display:none">
     <input type="file" id="restore-input" accept=".json" style="display:none">
-    <input type="file" id="eta-import-input" accept=".xlsx,.xls" style="display:none">
     <span class="topbar-status" id="topbar-status">Geen data geladen</span>
     <span id="autosave-ind" style="font-size:10px;color:var(--text3);"></span>
     <div class="topbar-search" onclick="document.getElementById('search')&amp;&amp;document.getElementById('search').focus()">
@@ -1323,106 +1320,9 @@ sectie                            ║
     </div>
 
     <!-- BOTEN TAB -->
-    <div id="tab-b" class="home-tab" style="display:none;">
-      <div class="home-grid">
-        <div class="home-main">
-          <!-- Summary cards -->
-          <div class="qa-row">
-            <div class="qa-card red" style="cursor:default;">
-              <div class="qa-ill">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#B23A33" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-              </div>
-              <div class="qa-body">
-                <div class="qa-title">Vertraagd</div>
-                <div class="qa-desc">Boten die later aankomen dan de originele ETA.</div>
-                <div class="qa-stat" id="bqa-del">—</div>
-                <div class="qa-stat-lbl">boten</div>
-              </div>
-            </div>
-            <div class="qa-card peach" style="cursor:default;">
-              <div class="qa-ill">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#A85A12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-              </div>
-              <div class="qa-body">
-                <div class="qa-title">Aankomend</div>
-                <div class="qa-desc">Boten die binnen 7 dagen aankomen.</div>
-                <div class="qa-stat" id="bqa-soon">—</div>
-                <div class="qa-stat-lbl">boten</div>
-              </div>
-            </div>
-            <div class="qa-card green" style="cursor:default;">
-              <div class="qa-ill">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2F7D55" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-              </div>
-              <div class="qa-body">
-                <div class="qa-title">Op schema</div>
-                <div class="qa-desc">Boten op of voor de originele ETA.</div>
-                <div class="qa-stat" id="bqa-ok">—</div>
-                <div class="qa-stat-lbl">boten</div>
-              </div>
-            </div>
-          </div>
-          <!-- Boats table with filter tabs -->
-          <div class="home-tabs">
-            <div class="home-tabs-hdr">
-              <div class="ht active" data-bstatus="" onclick="setBoatStatus('',this)">
-                <span class="ht-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></span>
-                <div class="ht-stack"><b>Alle boten</b><span><span id="bht-cnt-all">0</span> boten</span></div>
-              </div>
-              <div class="ht" data-bstatus="del" onclick="setBoatStatus('del',this)">
-                <span class="ht-icon" style="color:#B23A33;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg></span>
-                <div class="ht-stack"><b>Vertraagd</b><span><span id="bht-cnt-del">0</span> boten</span></div>
-              </div>
-              <div class="ht" data-bstatus="soon" onclick="setBoatStatus('soon',this)">
-                <span class="ht-icon" style="color:#A85A12;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>
-                <div class="ht-stack"><b>Aankomend</b><span><span id="bht-cnt-soon">0</span> boten</span></div>
-              </div>
-              <div class="ht" data-bstatus="ok" onclick="setBoatStatus('ok',this)">
-                <span class="ht-icon" style="color:#1A8754;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></span>
-                <div class="ht-stack"><b>Op schema</b><span><span id="bht-cnt-ok">0</span> boten</span></div>
-              </div>
-            </div>
-            <div style="overflow-x:auto;">
-              <table class="home-table" style="width:100%;min-width:960px;">
-                <thead><tr>
-                  <th style="padding-left:18px;">Boot</th>
-                  <th>Status</th>
-                  <th>Orig. ETA</th>
-                  <th>Huidige ETA</th>
-                  <th>Vertraging</th>
-                  <th>Aankomst</th>
-                  <th>Losdatum · d+</th>
-                  <th style="padding-right:18px;">Commentaar</th>
-                </tr></thead>
-                <tbody id="boats-tbody">
-                  <tr><td colspan="8" style="text-align:center;padding:50px 20px;color:var(--text3);">Importeer een Sumatra bestand om te beginnen</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-        <!-- Right aside -->
-        <aside>
-          <div class="week-card">
-            <div class="week-title">ETA beheer</div>
-            <div class="week-sub">Importeer bijgewerkte ETA's of stel de originele ETA eenmalig in per boot.</div>
-            <button class="week-cta" style="margin-bottom:8px;background:var(--accent);color:#fff;" onclick="document.getElementById('eta-import-input').click()">↑ ETA importeren</button>
-            <button class="week-cta" onclick="resetAllOrigETA()">↺ Reset alle Orig. ETA</button>
-            <div style="border-top:1px solid var(--border);margin:20px -20px 0;padding:18px 20px 0;">
-              <div class="week-title" style="font-size:14px;margin-bottom:4px;">Aankomende boten</div>
-              <div class="week-sub" style="margin-bottom:14px;">Boten die binnen 7 dagen aankomen.</div>
-              <div class="week-list" id="boats-week-list">
-                <div style="color:var(--text3);font-size:13px;text-align:center;padding:16px 0;">Geen aankomende boten.</div>
-              </div>
-              <div class="week-progress" id="boats-week-progress" style="display:none;">
-                <div class="week-progress-row"><span>Voortgang inplannen</span><b><span id="boats-week-done">0</span>/<span id="boats-week-total">0</span></b></div>
-                <div class="week-progress-bar"><div class="week-progress-fill" id="boats-week-fill" style="width:0%"></div></div>
-                <button class="week-cta" onclick="showTab('cp',null)">Container planning openen</button>
-              </div>
-            </div>
-          </div>
-        </aside>
-      </div>
+    <div id="tab-b" style="display:none;flex:1;overflow-y:auto;flex-direction:column;">
+      <div class="toolbar"><span style="font-size:12px;color:var(--text2);">Boten &amp; vertragingsoverzicht</span><span style="font-size:11px;color:var(--text3);margin-left:8px;">✎ Orig. ETA instellen · Lostijd in dagen invullen</span><button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="resetAllOrigETA()" title="Zet alle Orig. ETA gelijk aan huidige ETA (vertraging wordt 0)">↺ Reset Orig. ETA</button></div>
+      <div class="content"><div class="boat-grid" id="boat-grid"><div class="empty" style="grid-column:1/-1;">Geen data geladen</div></div></div>
     </div>
 
     <!-- CONTAINER PLANNING TAB -->
@@ -1554,13 +1454,14 @@ sectie                            ║
   </div>
 </div>
 
-<!-- Orig ETA Modal -->
+<!-- Orig / Huidig ETA Modal -->
 <div class="modal-bg" id="orig-modal">
   <div class="modal">
-    <div class="modal-title">Originele ETA instellen</div>
+    <div class="modal-title">ETA instellen</div>
     <div class="modal-sub" id="orig-sub"></div>
     <div class="field"><label>Boot</label><input type="text" id="orig-boot" readonly=""></div>
-    <div class="field"><label>Originele ETA <span style="font-size:11px;color:var(--text3);">Eenmalig invoeren bij nieuwe boot</span></label><input type="date" id="orig-eta-val"></div>
+    <div class="field"><label>Originele ETA</label><input type="date" id="orig-eta-val"></div>
+    <div class="field"><label>Huidige ETA <span style="font-size:11px;color:var(--text3);">(overschrijft Excel)</span></label><input type="date" id="huidig-eta-val"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeOrig()">Annuleren</button>
       <button class="btn btn-teal" onclick="saveOrig()">Opslaan</button>
@@ -1621,7 +1522,6 @@ var curTab='home',origBoot='';
 var klantGroepen=[],autosaveTimer=null,lastAutoSave=null;
 var cpArchivedContainers=[];
 var homeStatusFilter=''; // '', te-laat, krap, op-schema
-var boatStatusFilter='';  // '', del, soon, ok
 
 function loadStorage(){
   try{origETAs=JSON.parse(localStorage.getItem('dp5_orig')||'{}');}catch(e){origETAs={};}
@@ -1810,59 +1710,6 @@ document.getElementById('file-input').addEventListener('change',function(e){
   };
   reader.readAsArrayBuffer(file);e.target.value='';
 });
-
-document.getElementById('eta-import-input').addEventListener('change',function(e){
-  var file=e.target.files[0];if(!file)return;
-  var reader=new FileReader();
-  reader.onload=function(ev){
-    var wb=XLSX.read(ev.target.result,{type:'array',cellDates:true});
-    var ws=wb.Sheets[wb.SheetNames[0]];
-    var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-    var hdrIdx=-1,vIdx=-1,dIdx=-1;
-    for(var i=0;i<Math.min(rows.length,6);i++){
-      var row=rows[i];
-      for(var j=0;j<row.length;j++){
-        var v=String(row[j]||'').replace(/[\s\n]+/g,' ').trim().toLowerCase();
-        if(v==='vessel')vIdx=j;
-        if(v.includes('datum')||v.includes('date'))dIdx=j;
-      }
-      if(vIdx>=0&&dIdx>=0){hdrIdx=i;break;}
-    }
-    if(hdrIdx<0||vIdx<0||dIdx<0){showNotif('&#9888; Geen geldig ETA bestand — kolommen "Vessel" en "Datum" niet gevonden',true);return;}
-    var count=0,notFound=[];
-    for(var ri=hdrIdx+1;ri<rows.length;ri++){
-      var row=rows[ri];
-      var vessel=String(row[vIdx]||'').trim();
-      var rawDatum=row[dIdx];
-      if(!vessel)continue;
-      var d=rawDatum instanceof Date?toLocalMidnight(rawDatum):toLocalMidnight(pD(String(rawDatum||'').trim()));
-      if(!d)continue;
-      huidigETAs[vessel]=toISO(d);
-      var updated=false;
-      allData.forEach(function(r){
-        if(String(r['Boot']||'').trim()!==vessel)return;
-        r._eta_raw=d;r['ETA']=fmtD(d);
-        var o=pD(origETAs[vessel]||'');
-        r._delay=(o&&r._eta_raw)?Math.round((o-r._eta_raw)/86400000):null;
-        r._days_until=daysUntil(r._eta_raw);
-        var ld=calcLos(r._eta_raw,vessel);r._losdate=ld;r._losdate_fmt=ld?fmtD(ld):'';
-        r.dagenverschil=calcDagen(r._lev_raw,r._eta_raw);
-        r.status=calcSt(r.dagenverschil,r['Klantnaam']);
-        r.status_order=STO[r.status];
-        updated=true;
-      });
-      if(!updated)notFound.push(vessel);
-      count++;
-    }
-    saveStorage();
-    renderStats();render();if(curTab==='b')renderBoats();
-    var msg='&#9989; '+count+' ETA'+(count===1?'':'s')+' geïmporteerd';
-    if(notFound.length)msg+=' ('+notFound.length+' boot'+(notFound.length===1?'':'s')+' nog niet in Sumatra)';
-    showNotif(msg);
-  };
-  reader.readAsArrayBuffer(file);e.target.value='';
-});
-
 document.getElementById('search').addEventListener('input',render);
 
 // ── Process ──
@@ -1902,7 +1749,11 @@ function processData(rows,fname){
       out._etd_raw=toLocalMidnight(r['ETD'] instanceof Date?r['ETD']:pD(r['ETD']));
       out['ETA']=fmtD(out._eta_raw||r['ETA']);out['ETD']=fmtD(out._etd_raw||r['ETD']);out['Leverdatum Klant']=fmtD(out._lev_raw||r['Leverdatum Klant']);
       var boot=String(r['Boot']||'').trim();
-      // Huidige ETA: geïmporteerd via ETA-bestand heeft prioriteit boven Sumatra
+      // Orig. ETA: eerste keer automatisch instellen op import-ETA
+      if(!origETAs[boot]&&out._eta_raw){
+        origETAs[boot]=toISO(out._eta_raw);
+      }
+      // Huidige ETA: handmatig ingesteld via bootkaart heeft prioriteit boven Excel
       if(huidigETAs[boot]){
         var hd=pD(huidigETAs[boot]);
         if(hd){out._eta_raw=hd;out['ETA']=fmtD(hd);}
@@ -2276,17 +2127,26 @@ function herstelArchief(key){delete archivedOrders[key];saveStorage();renderArch
 function clearArchief(){if(confirm('Archief leegmaken?')){archivedOrders={};saveStorage();renderArchief();updateArchBadge();}}
 
 // ── Orig ETA ──
-function openOrig(boot){origBoot=boot;document.getElementById('orig-boot').value=boot;document.getElementById('orig-eta-val').value=origETAs[boot]||'';document.getElementById('orig-sub').textContent='Boot: '+boot;document.getElementById('orig-modal').className='modal-bg open';}
+function openOrig(boot){origBoot=boot;document.getElementById('orig-boot').value=boot;document.getElementById('orig-eta-val').value=origETAs[boot]||'';document.getElementById('huidig-eta-val').value=huidigETAs[boot]||'';document.getElementById('orig-sub').textContent='Boot: '+boot;document.getElementById('orig-modal').className='modal-bg open';}
 function closeOrig(){document.getElementById('orig-modal').className='modal-bg';}
 function saveOrig(){
   var origVal=document.getElementById('orig-eta-val').value;
+  var huidigVal=document.getElementById('huidig-eta-val').value;
   if(origVal) origETAs[origBoot]=origVal;
+  if(huidigVal) huidigETAs[origBoot]=huidigVal; else delete huidigETAs[origBoot];
   saveStorage();
+  var hd=huidigVal?pD(huidigVal):null;
   allData.forEach(function(r){
     if(String(r['Boot']||'').trim()!==origBoot) return;
     if(origVal){r._orig_iso=origVal;r._orig_fmt=fmtD(origVal);}
+    if(hd){r._eta_raw=hd;r['ETA']=fmtD(huidigVal);}
     var o=pD(origETAs[origBoot]||'');
     r._delay=(o&&r._eta_raw)?Math.round((o-r._eta_raw)/86400000):null;
+    r._days_until=daysUntil(r._eta_raw);
+    var ld=calcLos(r._eta_raw,origBoot);r._losdate=ld;r._losdate_fmt=ld?fmtD(ld):'';
+    r.dagenverschil=calcDagen(r._lev_raw,r._eta_raw);
+    r.status=calcSt(r.dagenverschil,r['Klantnaam']);
+    r.status_order=STO[r.status];
   });
   renderStats();render();if(curTab==='b')renderBoats();
   closeOrig();
@@ -2380,138 +2240,43 @@ function resetAllOrigETA(){
 }
 
 // ── Render boten ──
-function setBoatStatus(s,el){
-  boatStatusFilter=s;
-  document.querySelectorAll('[data-bstatus]').forEach(function(h){h.classList.remove('active');});
-  if(el)el.classList.add('active');
-  renderBoats();
-}
-
 function renderBoats(){
   var boats={};
   allData.filter(function(r){return !r._hidden;}).forEach(function(r){
     var b=String(r['Boot']||'').trim();if(!b)return;
-    if(!boats[b])boats[b]={etaRaw:r._eta_raw,etaFmt:r['ETA'],origFmt:r._orig_fmt,delay:r._delay,daysUntil:r._days_until,orders:0,importedEta:!!huidigETAs[b]};
+    if(!boats[b]){
+      var oi=origETAs[b]||'';
+      var o2=pD(oi);
+      var eta=r._eta_raw;
+      boats[b]={etaRaw:r._eta_raw,etaFmt:r['ETA'],origFmt:r._orig_fmt,delay:r._delay,daysUntil:r._days_until,orders:0,manualEta:!!huidigETAs[b]};
+    }
     boats[b].orders++;
   });
-  var sortedKeys=Object.keys(boats).sort(function(a,b){
-    var da=boats[a].daysUntil===null?9999:boats[a].daysUntil;
-    var db=boats[b].daysUntil===null?9999:boats[b].daysUntil;
-    return da-db;
-  });
-  function isDel(bo){return bo.delay!==null&&bo.delay<0;}
-  function isSoon(bo){return bo.daysUntil!==null&&bo.daysUntil>=0&&bo.daysUntil<=7;}
-  function isOk(bo){return !isDel(bo)&&!isSoon(bo);}
-  var cntAll=sortedKeys.length;
-  var cntDel=sortedKeys.filter(function(k){return isDel(boats[k]);}).length;
-  var cntSoon=sortedKeys.filter(function(k){return isSoon(boats[k]);}).length;
-  var cntOk=sortedKeys.filter(function(k){return isOk(boats[k]);}).length;
-  ['all','del','soon','ok'].forEach(function(id,i){var el=document.getElementById('bht-cnt-'+id);if(el)el.textContent=[cntAll,cntDel,cntSoon,cntOk][i];});
-  var bqaDel=document.getElementById('bqa-del');if(bqaDel)bqaDel.textContent=cntDel||'—';
-  var bqaSoon=document.getElementById('bqa-soon');if(bqaSoon)bqaSoon.textContent=cntSoon||'—';
-  var bqaOk=document.getElementById('bqa-ok');if(bqaOk)bqaOk.textContent=cntOk||'—';
-  document.querySelectorAll('[data-bstatus]').forEach(function(h){h.classList.toggle('active',h.dataset.bstatus===boatStatusFilter);});
-  var filtered=sortedKeys;
-  if(boatStatusFilter==='del')filtered=sortedKeys.filter(function(k){return isDel(boats[k]);});
-  else if(boatStatusFilter==='soon')filtered=sortedKeys.filter(function(k){return isSoon(boats[k]);});
-  else if(boatStatusFilter==='ok')filtered=sortedKeys.filter(function(k){return isOk(boats[k]);});
   var h='';
-  if(!filtered.length){
-    h='<tr><td colspan="8" style="text-align:center;padding:50px 20px;color:var(--text3);">'+(allData.length?'Geen boten in deze categorie.':'Importeer een Sumatra bestand om te beginnen.')+'</td></tr>';
-  } else {
-    filtered.forEach(function(b){
-      var bo=boats[b];
-      var losN=parseInt(boatLos[b]||0);
-      var losDate=bo.etaRaw&&losN?fmtD(addDays(bo.etaRaw,losN)):'';
-      var resId='br-'+b.replace(/[^a-zA-Z0-9]/g,'_');
-      var statusLabel,statusClass;
-      if(isDel(bo)){statusLabel='Vertraagd';statusClass='br';}
-      else if(bo.daysUntil!==null&&bo.daysUntil<0){statusLabel='Gearriveerd';statusClass='bt';}
-      else if(isSoon(bo)){statusLabel='Aankomend';statusClass='bo';}
-      else{statusLabel='Op schema';statusClass='bt';}
-      var delayHtml;
-      if(bo.delay===null)delayHtml='<span style="color:var(--text3)">—</span>';
-      else if(bo.delay<0)delayHtml='<span style="color:#B23A33;font-weight:500;">'+bo.delay+' d</span>';
-      else if(bo.delay>0)delayHtml='<span style="color:#1A8754;font-weight:500;">+'+bo.delay+' d</span>';
-      else delayHtml='<span style="color:#1A8754;">Op tijd</span>';
-      var aankomst;
-      if(bo.daysUntil===null)aankomst='<span style="color:var(--text3)">—</span>';
-      else if(bo.daysUntil<0)aankomst='<span style="color:var(--accent)">Gearriveerd</span>';
-      else if(bo.daysUntil===0)aankomst='<span style="color:#A85A12;font-weight:500;">Vandaag</span>';
-      else if(bo.daysUntil<=7)aankomst='<span style="color:#A85A12;font-weight:500;">'+bo.daysUntil+' d</span>';
-      else aankomst='<span style="color:var(--text2)">'+bo.daysUntil+' d</span>';
-      var origCell=bo.origFmt
-        ?bo.origFmt+' <button class="btn btn-ghost btn-sm" onclick="openOrig(''+b.replace(/'/g,"\\'")+'')">&#9998;</button>'
-        :'<button class="btn btn-ghost btn-sm" onclick="openOrig(''+b.replace(/'/g,"\\'")+'')">+ Instellen</button>';
-      var etaCell=(bo.etaFmt||'—')+(bo.importedEta?' <span style="font-size:10px;color:#1A8754;" title="Via ETA import">↑</span>':'');
-      var losCel='<input class="los-inp" type="number" min="0" max="30" value="'+(boatLos[b]||'')+'" placeholder="—" style="width:44px;" onchange="saveBoatLos(''+b.replace(/'/g,"\\'")+'',this.value)" oninput="updateLosRes(''+b.replace(/'/g,"\\'")+'',this.value,''+resId+'')">'
-        +'<span id="'+resId+'" style="font-size:12px;color:var(--text3);margin-left:4px;">'+(losN&&losDate?'→ '+losDate:'')+'</span>';
-      var commentVal=(boatComments[b]||'').replace(/"/g,'&quot;');
-      var commentEl='<input type="text" style="width:100%;min-width:100px;background:transparent;border:none;border-bottom:1px solid transparent;padding:2px 0;font-size:12px;color:var(--text2);font-family:var(--font);outline:none;" placeholder="Notitie…" value="'+commentVal+'" onchange="saveBoatComment(''+b.replace(/'/g,"\\'")+'',this.value)" onfocus="this.style.borderBottomColor='var(--accent)'" onblur="this.style.borderBottomColor='transparent'">';
-      h+='<tr>'
-        +'<td style="padding-left:18px;"><div style="font-weight:600;color:var(--text);font-size:13.5px;">'+b+'</div><div style="font-size:11px;color:var(--text3);">'+bo.orders+' order'+(bo.orders!==1?'s':'')+'</div></td>'
-        +'<td><span class="badge '+statusClass+'">'+statusLabel+'</span></td>'
-        +'<td style="font-size:13px;">'+origCell+'</td>'
-        +'<td style="font-size:13px;">'+etaCell+'</td>'
-        +'<td>'+delayHtml+'</td>'
-        +'<td>'+aankomst+'</td>'
-        +'<td style="white-space:nowrap;">'+losCel+'</td>'
-        +'<td style="padding-right:18px;">'+commentEl+'</td>'
-        +'</tr>';
-    });
-  }
-  var tbody=document.getElementById('boats-tbody');
-  if(tbody)tbody.innerHTML=h;
-  // Right rail: aankomende boten binnen 7 dagen
-  var weekList=document.getElementById('boats-week-list');
-  var weekProg=document.getElementById('boats-week-progress');
-  if(!weekList)return;
-  var today2=new Date();today2.setHours(0,0,0,0);
-  var soon7=new Date(today2);soon7.setDate(soon7.getDate()+7);
-  var boatMap={};
-  allData.filter(function(r){return !r._hidden;}).forEach(function(r){
-    var bk=String(r['Boot']||'').trim();if(!bk)return;
-    if(!(r._eta_raw instanceof Date))return;
-    if(r._eta_raw<today2||r._eta_raw>soon7)return;
-    if(!boatMap[bk])boatMap[bk]={boot:bk,eta:r._eta_raw,containers:{}};
-    var cont=String(r['Container']||'').trim();
-    if(cont)boatMap[bk].containers[cont]=true;
+  Object.keys(boats).sort(function(a,b){var da=boats[a].daysUntil===null?9999:boats[a].daysUntil;var db=boats[b].daysUntil===null?9999:boats[b].daysUntil;return da-db;}).forEach(function(b){
+    var bo=boats[b];var losN=parseInt(boatLos[b]||0);var losDate=bo.etaRaw&&losN?fmtD(addDays(bo.etaRaw,losN)):'—';
+    var cc=bo.delay!==null&&bo.delay<0?'bc del':(bo.daysUntil!==null&&bo.daysUntil<=7?'bc sn':'bc fn');
+    var bc2=bo.delay!==null&&bo.delay<0?'bc-badge urg':(bo.daysUntil!==null&&bo.daysUntil<=7?'bc-badge sn':'bc-badge fn');
+    var bt=bo.daysUntil===null?'Onbekend':(bo.daysUntil<0?'Gearriveerd':bo.daysUntil===0?'Aankomst vandaag':'Aankomst over '+bo.daysUntil+' d');
+    var dh=bo.delay===null?'<span class="bmv">—</span>':(bo.delay<0?'<span class="bmv r">'+bo.delay+' d</span>':bo.delay>0?'<span class="bmv g">+'+bo.delay+' d</span>':'<span class="bmv g">Op tijd</span>');
+    var duh=bo.daysUntil===null?'<span class="bmv">—</span>':(bo.daysUntil<0?'<span class="bmv g">Gearr.</span>':bo.daysUntil<=7?'<span class="bmv o">'+bo.daysUntil+' d</span>':'<span class="bmv g">'+bo.daysUntil+' d</span>');
+    var resId='lr-'+b.replace(/[^a-zA-Z0-9]/g,'_');
+    h+='<div class="'+cc+'"><div class="bc-top"><div class="'+bc2+'">&#9679; '+bt+'</div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;">'
+      +'<div><div class="bc-name">'+b+'</div><div class="bc-sub">'+bo.orders+' orders</div></div>'
+      +'<button class="orig-btn" onclick="openOrig(\''+b.replace(/'/g,"\\'")+'\')">&#9998; Orig. ETA</button></div></div>'
+      +'<div class="bc-metrics"><div class="bm"><div class="bml">Orig. ETA</div><div class="bmv">'+(bo.origFmt||'—')+'</div></div>'
+      +'<div class="bm"><div class="bml">Huidige ETA</div><div class="bmv">'+(bo.etaFmt||'—')+(bo.manualEta?' <span style="font-size:10px;color:var(--accent);">✎</span>':'')+'</div></div>'
+      +'<div class="bm"><div class="bml">Vertraging</div>'+dh+'</div>'
+      +'<div class="bm"><div class="bml">Dagen tot aankomst</div>'+duh+'</div></div>'
+      +'<div class="bc-bot"><div class="los-row"><span class="los-lbl">Lostijd (d)</span>'
+      +'<input class="los-inp" type="number" min="0" max="30" value="'+(boatLos[b]||'')+'" placeholder="0" onchange="saveBoatLos(\''+b.replace(/'/g,"\\'")+'\',this.value)" oninput="updateLosRes(\''+b.replace(/'/g,"\\'")+'\',this.value,\''+resId+'\')">'
+      +'<span class="los-res" id="'+resId+'">'+(losN&&bo.etaFmt?'\u2192 '+losDate:'')+'</span></div>'
+            +'<div class="bc-cl">Commentaar</div>'
+      +'<textarea class="bc-ta" placeholder="Voeg commentaar toe..." onchange="saveBoatComment(\''+b.replace(/'/g,"\\'")+'\',this.value)">'+(boatComments[b]||'')+'</textarea>'
+      +'</div></div>';
   });
-  var weekBoats=Object.keys(boatMap).map(function(k){return boatMap[k];}).sort(function(a,b){return a.eta-b.eta;});
-  if(!weekBoats.length){
-    weekList.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center;padding:16px 0;">Geen aankomende boten.</div>';
-    if(weekProg)weekProg.style.display='none';
-    return;
-  }
-  var totalC=0,plannedC=0;
-  weekBoats.forEach(function(bw){
-    var conts=Object.keys(bw.containers);
-    bw.totalC=conts.length;
-    bw.plannedC=conts.filter(function(c){var i=cpContainers.findIndex(function(cc){return cc.container===c;});return i>=0&&cpContainers[i].datum;}).length;
-    totalC+=bw.totalC;plannedC+=bw.plannedC;
-  });
-  var wh='';
-  weekBoats.forEach(function(bw){
-    var diff=Math.round((bw.eta-today2)/86400000);
-    var dayLbl=diff===0?'Vandaag':(diff===1?'Morgen':DAGEN_VOL[bw.eta.getDay()]+' '+bw.eta.getDate()+' '+MNS[bw.eta.getMonth()]);
-    var allPl=bw.plannedC===bw.totalC&&bw.totalC>0;
-    var urgent=diff<=2&&!allPl;
-    var circle=allPl?'<div class="week-circle done">&#10003;</div>':(urgent?'<div class="week-circle urgent">!</div>':'<div class="week-circle todo">'+(bw.totalC-bw.plannedC)+'</div>');
-    var losN2=parseInt(boatLos[bw.boot]||0);
-    var losStr='';if(losN2&&bw.eta){var ld2=addDays(bw.eta,losN2);losStr=' · Lossen '+ld2.getDate()+' '+MNS[ld2.getMonth()];}
-    wh+='<div class="week-item'+(allPl?' done':'')+'" onclick="showTab('cp',null)">'
-      +circle+'<div class="week-body"><div class="week-item-title">'+bw.boot+'</div>'
-      +'<div class="week-item-desc">'+dayLbl+losStr+'</div>'
-      +'<div class="week-item-desc">'+(allPl?bw.totalC+' containers gepland':bw.plannedC+'/'+bw.totalC+' containers gepland')+'</div>'
-      +'</div><span class="week-arrow">&#8250;</span></div>';
-  });
-  weekList.innerHTML=wh;
-  if(weekProg){
-    weekProg.style.display='block';
-    var wdEl=document.getElementById('boats-week-done');if(wdEl)wdEl.textContent=plannedC;
-    var wtEl=document.getElementById('boats-week-total');if(wtEl)wtEl.textContent=totalC;
-    var wfEl=document.getElementById('boats-week-fill');if(wfEl)wfEl.style.width=(totalC>0?Math.round(plannedC/totalC*100):0)+'%';
-  }
+  document.getElementById('boat-grid').innerHTML=h||'<div class="empty" style="grid-column:1/-1;">Geen data geladen</div>';
 }
 
 // ── CONTAINER PLANNING ──
