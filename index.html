@@ -1730,7 +1730,8 @@ function processData(rows,fname){
     if(!importLev)return; // import heeft geen datum → bewaar handmatige datum
     var importIso = toISO(importLev);
     if(importIso === meta.leverdatum)return; // zelfde → geen actie
-    // Import verschilt van handmatig → handmatige datum wint, teller bijhouden
+    // Import verschilt van handmatig → import wint, verwijder handmatige datum
+    delete orderMeta[key].leverdatum;
     overrideCount++;
   });
 
@@ -1815,7 +1816,7 @@ function processData(rows,fname){
   // ── Verwerk direct — import is altijd leidend ────────────────────────
   doProcess();
   if(overrideCount > 0){
-    showNotif('&#128274; '+overrideCount+' leverdatum'+(overrideCount===1?' is':' zijn')+' beschermd — handmatige correctie behoudt prioriteit');
+    showNotif('&#8635; '+overrideCount+' leverdatum'+(overrideCount===1?' is':' zijn')+' bijgewerkt vanuit de import');
   }
 }
 
