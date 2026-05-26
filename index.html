@@ -1344,9 +1344,13 @@ sectie                            ║
         <div class="empty">Voeg containers toe via de + knop</div>
       </div>
       <div class="cp-expbar" id="cp-expbar">
-        <span><strong id="cp-expcount">0</strong> container(s) geselecteerd voor Docklay</span>
+        <span><strong id="cp-expcount">0</strong> container(s) geselecteerd</span>
         <button class="btn-ghost" onclick="cpClearSel()">Selectie wissen</button>
         <div class="grow"></div>
+        <button class="btn-exp" onclick="cpEmailSelected()" title="Stel e-mail op met containergegevens">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,4 12,13 22,4"/></svg>
+          E-mail opstellen
+        </button>
         <button class="btn-exp" onclick="cpExportDocklay()" title="Exporteer als opdrachten-import voor Docklay">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Export Docklay (.xlsx)
@@ -2470,8 +2474,7 @@ function renderCP(){
         +'<table><thead><tr>'
         +'<th style="width:30px;" class="cp-chk-th"><input type="checkbox" class="cp-chk" '+(bContainers.every(function(x){return cpSelContainers.has(x.container);})?'checked':'')+' onclick="cpToggleBoatSel(this,\''+bootName.replace(/'/g,'&apos;')+'\',\''+wk.replace(/[^a-zA-Z0-9]/g,'_')+'\')" title="Selecteer alle containers van deze boot"></th>'
         +'<th style="width:115px;">Container</th>'
-        +'<th style="width:60px;">Type</th>'
-        +'<th style="width:100px;">Type Docklay</th>'
+        +'<th style="width:110px;">Container Type</th>'
         +'<th style="width:85px;">Forwarder</th>'
         +'<th style="width:200px;">Losdatum &amp; tijd</th>'
         +'<th style="width:36px;">Dag</th>'
@@ -2566,7 +2569,6 @@ function renderCP(){
         h+='<tr class="'+rowCls+'">'
           +'<td class="cp-chk-th"><input type="checkbox" class="cp-chk" '+(cpSelContainers.has(c.container)?'checked':'')+' onclick="cpToggleSel(\''+c.container.replace(/'/g,'&apos;')+'\')"></td>'
           +'<td>'+spoedDot+'<span style="color:var(--text);font-weight:500;">'+c.container+'</span></td>'
-          +'<td><span class="badge b-type">'+c.type+'</span></td>'
           +'<td>'+(function(){
               var cur=c.docklayType||cpAutoDocklayType(c.type);
               var opts='<option value="">—</option>';
@@ -2755,6 +2757,32 @@ function cpExportDocklay(){
   var fname='Docklay_opdrachten_'+n.getFullYear()+String(n.getMonth()+1).padStart(2,'0')+String(n.getDate()).padStart(2,'0')+'_'+String(n.getHours()).padStart(2,'0')+String(n.getMinutes()).padStart(2,'0')+'.xlsx';
   XLSX.writeFile(wb,fname);
   showNotif('&#10003; '+selected.length+' container(s) ge\u00ebxporteerd naar Docklay');
+}
+
+function cpEmailSelected(){
+  var selected=cpContainers.filter(function(c){return cpSelContainers.has(c.container);});
+  if(!selected.length){showNotif('&#9888; Geen containers geselecteerd',true);return;}
+  var now=new Date();
+  var MNFULL=['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
+  var datumStr=now.getDate()+' '+MNFULL[now.getMonth()]+' '+now.getFullYear();
+  var DAG=['Zo','Ma','Di','Wo','Do','Vr','Za'];
+  var rows=selected.map(function(c){
+    var type=c.docklayType||cpAutoDocklayType(c.type)||c.type||'\u2014';
+    var boot=c.boot||'\u2014';
+    var datum='\u2014';
+    if(c.datum){var d=pD(c.datum);if(d)datum=DAG[d.getDay()]+' '+d.getDate()+' '+MNS[d.getMonth()];}
+    return [c.container,type,boot,datum,c.tijd||'\u2014',c.spoed?'JA':'\u2014'];
+  });
+  var headers=['Container','Type','Boot','Losdatum','Tijd','Spoed'];
+  var widths=headers.map(function(h,i){var m=h.length;rows.forEach(function(r){if(r[i].length>m)m=r[i].length;});return m;});
+  function pad(s,n){s=String(s);return s+Array(Math.max(0,n-s.length+1)).join(' ');}
+  var sep=widths.map(function(w){return Array(w+3).join('-');}).join('+');
+  var hdr=headers.map(function(h,i){return pad(h,widths[i]);}).join(' | ');
+  var dataRows=rows.map(function(r){return r.map(function(v,i){return pad(v,widths[i]);}).join(' | ');});
+  var tabel=[hdr,sep].concat(dataRows).join('\n');
+  var subject='Container planning DP Factory \u2014 '+datumStr;
+  var bodyText='Beste,\n\nHierbij de losinformatie voor onderstaande containers:\n\n'+tabel+'\n\nMet vriendelijke groet,\nDP Factory';
+  window.open('mailto:?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(bodyText));
 }
 
 function toggleWeek(id){var el=document.getElementById(id);var chev=document.getElementById('chev-'+id);if(!el)return;var open=el.style.display!=='none';el.style.display=open?'none':'block';if(chev)chev.style.transform=open?'rotate(-90deg)':'rotate(0deg)';}
