@@ -2996,6 +2996,7 @@ function publishOverzicht(){
   var totL=data.filter(function(r){return r.status==='te-laat';}).length;
   var totK=data.filter(function(r){return r.status==='krap';}).length;
   var totO=data.filter(function(r){return r.status==='op-schema';}).length;
+  var totNL=data.filter(function(r){return !r['Leverdatum Klant'];}).length;
 
   // Aankomende boten binnen 7 dagen — spoed = order met status 'te-laat'
   var today=new Date();today.setHours(0,0,0,0);
@@ -3205,6 +3206,10 @@ function publishOverzicht(){
     +'.delay-pos{color:#B23A33;font-weight:600;}.delay-neg{color:#1A8754;font-weight:600;}'
     +'.spoed-tag{background:#FCEBEA;color:#B23A33;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;letter-spacing:.04em;}'
     +'.hidden-row{display:none;}'
+    +'.qa-card[data-filter]{cursor:pointer;transition:box-shadow .15s;}'
+    +'.qa-card[data-filter]:hover{box-shadow:0 4px 16px rgba(0,0,0,.1);}'
+    +'.qa-card.qa-sel{outline:2px solid rgba(0,0,0,.22);outline-offset:3px;}'
+    +'.fc.nl{background:#FEF3C7;border-color:#FCD34D;color:#B45309;font-weight:600;}'
     +'.cnt-lbl{font-size:12px;color:#9AA1AE;padding:10px 18px;border-top:1px solid #E8EBEF;background:#FAFBFC;}'
     +'#cnt-num{color:#1A1F2E;font-weight:600;}'
     /* Right rail */
@@ -3247,7 +3252,7 @@ function publishOverzicht(){
 
       /* Hero / KPI pastel cards */
       +'<div class="qa-row">'
-        +'<div class="qa-card '+(totL>0?'red':'green')+'">'
+        +'<div class="qa-card '+(totL>0?'red':'green')+'" id="tile-l" data-filter="te-laat" onclick="tileClick(\'te-laat\',this)">'
           +'<div class="qa-ill">'
             +'<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
           +'</div>'
@@ -3258,7 +3263,7 @@ function publishOverzicht(){
             +'<div class="qa-stat-lbl">orders te laat</div>'
           +'</div>'
         +'</div>'
-        +'<div class="qa-card peach">'
+        +'<div class="qa-card peach" id="tile-w" data-filter="week" onclick="tileWeek(this)">'
           +'<div class="qa-ill">'
             +'<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>'
           +'</div>'
@@ -3269,7 +3274,7 @@ function publishOverzicht(){
             +'<div class="qa-stat-lbl">'+komendeBoten.length+' '+(komendeBoten.length===1?'boot':'boten')+(spoedContainers>0?' · <strong style="color:#B23A33;">'+spoedContainers+' spoed</strong>':'')+'</div>'
           +'</div>'
         +'</div>'
-        +'<div class="qa-card lavender">'
+        +'<div class="qa-card lavender" id="tile-o" data-filter="op-schema" onclick="tileClick(\'op-schema\',this)">'
           +'<div class="qa-ill">'
             +'<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
           +'</div>'
@@ -3298,6 +3303,7 @@ function publishOverzicht(){
           +'<div class="fc" id="fc-l" onclick="filterSt(\'te-laat\',this,\'la\')">Aandacht <span class="cnt" id="cnt-l">'+totL+'</span></div>'
           +'<div class="fc" id="fc-k" onclick="filterSt(\'krap\',this,\'kr\')">Krap <span class="cnt" id="cnt-k">'+totK+'</span></div>'
           +'<div class="fc" id="fc-o" onclick="filterSt(\'op-schema\',this,\'ok\')">Op schema <span class="cnt" id="cnt-o">'+totO+'</span></div>'
+          +'<div class="fc" id="fc-nl" onclick="fcNL(this)">Geen leverdatum <span class="cnt" id="cnt-nl">'+totNL+'</span></div>'
           +'<div class="divider"></div>'
           +'<select id="f-co" onchange="applyFilters()"><option value="">Alle containers</option>'+coOpts+'</select>'
         +'</div>'
@@ -3344,13 +3350,19 @@ function publishOverzicht(){
     +'<div class="footer">DP Factory Logistiek · Read-only export voor het team · Gegenereerd '+datumStr+' '+tijdStr+'</div>'
 
     +'<script>'
-    +'var AF2=null;'
-    +'function filterAlle(){AF2=null;document.querySelectorAll(".fc").forEach(function(e){e.classList.remove("la","kr","ok");if(e.id==="fc-alle")e.classList.add("al");else e.classList.remove("al");});applyFilters();}'
-    +'function filterSt(s,el,cls){if(AF2===s){AF2=null;el.classList.remove("la","kr","ok");document.getElementById("fc-alle").classList.add("al");}else{AF2=s;document.querySelectorAll(".fc").forEach(function(e){e.classList.remove("la","kr","ok","al");});el.classList.add(cls);document.getElementById("fc-alle").classList.remove("al");}applyFilters();}'
+    +'var AF2=null,filterNL2=false,filterWeek2=false;'
+    +'var _t0=(function(){var d=new Date();d.setHours(0,0,0,0);return d.getTime();})();'
+    +'var _t7=_t0+7*86400000;'
+    +'function syncTiles(){document.querySelectorAll(".qa-card[data-filter]").forEach(function(t){var f=t.dataset.filter;var on=(f==="te-laat"&&AF2==="te-laat")||(f==="op-schema"&&AF2==="op-schema")||(f==="geen-lev"&&filterNL2)||(f==="week"&&filterWeek2);t.classList.toggle("qa-sel",on);});}'
+    +'function filterAlle(){AF2=null;filterNL2=false;filterWeek2=false;document.querySelectorAll(".fc").forEach(function(e){e.classList.remove("la","kr","ok","nl");if(e.id==="fc-alle")e.classList.add("al");else e.classList.remove("al");});syncTiles();applyFilters();}'
+    +'function filterSt(s,el,cls){if(AF2===s){AF2=null;el.classList.remove(cls);document.getElementById("fc-alle").classList.add("al");}else{AF2=s;filterNL2=false;filterWeek2=false;document.querySelectorAll(".fc").forEach(function(e){e.classList.remove("la","kr","ok","nl","al");});el.classList.add(cls);document.getElementById("fc-alle").classList.remove("al");}syncTiles();applyFilters();}'
+    +'function fcNL(el){filterNL2=!filterNL2;AF2=null;filterWeek2=false;if(filterNL2){document.querySelectorAll(".fc").forEach(function(e){e.classList.remove("la","kr","ok","nl","al");});el.classList.add("nl");}else{el.classList.remove("nl");document.getElementById("fc-alle").classList.add("al");}syncTiles();applyFilters();}'
+    +'function tileClick(s,tile){var fcMap={"te-laat":"fc-l","op-schema":"fc-o"};var clsMap={"te-laat":"la","op-schema":"ok"};var fc=document.getElementById(fcMap[s]);if(fc)filterSt(s,fc,clsMap[s]);}'
+    +'function tileWeek(tile){filterWeek2=!filterWeek2;AF2=null;filterNL2=false;document.querySelectorAll(".fc").forEach(function(e){e.classList.remove("la","kr","ok","nl","al");});if(!filterWeek2)document.getElementById("fc-alle").classList.add("al");syncTiles();applyFilters();}'
     +'function applyFilters(){'
     +'var kl=document.getElementById("f-kl").value,bo=document.getElementById("f-bo").value,co=document.getElementById("f-co").value,q=document.getElementById("f-q").value.toLowerCase();'
     +'var rows=document.querySelectorAll("#tbl-body tr:not(.day-sep)"),vis=0,l=0,k=0,o=0;'
-    +'rows.forEach(function(r){var show=true;if(AF2&&r.dataset.status!==AF2)show=false;if(kl&&r.dataset.klant!==kl)show=false;if(bo&&r.dataset.boot!==bo)show=false;if(co&&r.dataset.container!==co)show=false;if(q){var hay=(r.dataset.artnr||"")+" "+(r.dataset.artikel||"")+" "+r.textContent.toLowerCase();if(hay.indexOf(q)===-1)show=false;}r.className=show?"":"hidden-row";if(show){vis++;if(r.dataset.status==="te-laat")l++;else if(r.dataset.status==="krap")k++;else if(r.dataset.status==="op-schema")o++;}});'
+    +'rows.forEach(function(r){var show=true;if(AF2&&r.dataset.status!==AF2)show=false;if(filterNL2&&parseInt(r.dataset.lev||0)!==0)show=false;if(filterWeek2){var eta=parseInt(r.dataset.eta||0);if(!eta||eta<_t0||eta>_t7)show=false;}if(kl&&r.dataset.klant!==kl)show=false;if(bo&&r.dataset.boot!==bo)show=false;if(co&&r.dataset.container!==co)show=false;if(q){var hay=(r.dataset.artnr||"")+" "+(r.dataset.artikel||"")+" "+r.textContent.toLowerCase();if(hay.indexOf(q)===-1)show=false;}r.className=show?"":"hidden-row";if(show){vis++;if(r.dataset.status==="te-laat")l++;else if(r.dataset.status==="krap")k++;else if(r.dataset.status==="op-schema")o++;}});'
     +'document.querySelectorAll("#tbl-body tr.day-sep").forEach(function(sep){var nxt=sep.nextElementSibling,hasVis=false;while(nxt&&!nxt.classList.contains("day-sep")){if(!nxt.classList.contains("hidden-row")){hasVis=true;break;}nxt=nxt.nextElementSibling;}sep.className=hasVis?"day-sep":"day-sep hidden-row";});'
     +'document.getElementById("cnt-num").textContent=vis;'
     +'document.getElementById("cnt-num2").textContent=vis;'
