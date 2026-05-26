@@ -26,21 +26,44 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: main
-          path: build
 
-      - name: Checkout test branch into build/test
+      - name: Checkout test branch (tijdelijk)
         uses: actions/checkout@v4
         with:
           ref: test
-          path: build/test
+          path: _test_branch
         continue-on-error: true
 
-      - name: Inject TEST OMGEVING banner into test build
+      - name: Kopieer test index.html naar test/ submap
         run: |
-          if [ -f build/test/index.html ]; then
-            BANNER='<div id="test-env-banner" style="position:fixed;top:0;left:0;right:0;z-index:99999;background:#F59E0B;color:#fff;text-align:center;padding:9px 16px;font-family:system-ui,sans-serif;font-size:13px;font-weight:600;letter-spacing:-.01em;box-shadow:0 2px 8px rgba(0,0,0,.15);">&#9888; TEST OMGEVING &mdash; wijzigingen hier zijn NIET live in productie</div>'
-            sed -i "s|<body\([^>]*\)>|<body\1>${BANNER}|" build/test/index.html
-            echo "TEST banner injected into build/test/index.html"
+          if [ -f _test_branch/index.html ]; then
+            mkdir -p test
+            cp _test_branch/index.html test/index.html
+            echo "Test index.html gekopieerd"
+          fi
+          rm -rf _test_branch
+
+      - name: Inject TEST OMGEVING banner (via Python)
+        run: |
+          if [ -f test/index.html ]; then
+            python3 - <<'PYEOF'
+          with open('test/index.html', 'r', encoding='utf-8') as f:
+              html = f.read()
+          banner = (
+              '<div id="test-env-banner" style="position:fixed;top:0;left:0;right:0;'
+              'z-index:99999;background:#F59E0B;color:#fff;text-align:center;'
+              'padding:9px 16px;font-family:system-ui,sans-serif;font-size:13px;'
+              'font-weight:600;letter-spacing:-.01em;'
+              'box-shadow:0 2px 8px rgba(0,0,0,.15);">'
+              '&#9888; TEST OMGEVING &mdash; wijzigingen hier zijn NIET live in productie'
+              '</div>'
+          )
+          import re
+          html = re.sub(r'(<body[^>]*>)', r'\1' + banner, html, count=1)
+          with open('test/index.html', 'w', encoding='utf-8') as f:
+              f.write(html)
+          print('TEST banner succesvol geïnjecteerd')
+          PYEOF
           fi
 
       - name: Setup Pages
@@ -49,7 +72,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'build'
+          path: '.'
 
       - name: Deploy to GitHub Pages
         id: deployment
