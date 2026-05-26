@@ -22,48 +22,35 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout production (main)
+      - name: Checkout main (productie)
         uses: actions/checkout@v4
         with:
           ref: main
+          fetch-depth: 0
 
-      - name: Checkout test branch (tijdelijk)
-        uses: actions/checkout@v4
-        with:
-          ref: test
-          path: _test_branch
-        continue-on-error: true
-
-      - name: Kopieer test index.html naar test/ submap
+      - name: Haal test/index.html op via git show
         run: |
-          if [ -f _test_branch/index.html ]; then
-            mkdir -p test
-            cp _test_branch/index.html test/index.html
-            echo "Test index.html gekopieerd"
+          git fetch origin test
+          mkdir -p test
+          if git show origin/test:index.html > test/index.html 2>/dev/null; then
+            echo "test/index.html succesvol opgehaald ($(wc -c < test/index.html) bytes)"
+          else
+            echo "Geen index.html gevonden op test branch"
+            rm -rf test
           fi
-          rm -rf _test_branch
 
-      - name: Inject TEST OMGEVING banner (via Python)
+      - name: Voeg TEST OMGEVING banner toe
         run: |
           if [ -f test/index.html ]; then
-            python3 - <<'PYEOF'
-          with open('test/index.html', 'r', encoding='utf-8') as f:
-              html = f.read()
-          banner = (
-              '<div id="test-env-banner" style="position:fixed;top:0;left:0;right:0;'
-              'z-index:99999;background:#F59E0B;color:#fff;text-align:center;'
-              'padding:9px 16px;font-family:system-ui,sans-serif;font-size:13px;'
-              'font-weight:600;letter-spacing:-.01em;'
-              'box-shadow:0 2px 8px rgba(0,0,0,.15);">'
-              '&#9888; TEST OMGEVING &mdash; wijzigingen hier zijn NIET live in productie'
-              '</div>'
-          )
+            python3 -c "
           import re
-          html = re.sub(r'(<body[^>]*>)', r'\1' + banner, html, count=1)
-          with open('test/index.html', 'w', encoding='utf-8') as f:
-              f.write(html)
-          print('TEST banner succesvol geïnjecteerd')
-          PYEOF
+          f = 'test/index.html'
+          html = open(f, encoding='utf-8').read()
+          b = '<div id=\"test-banner\" style=\"position:fixed;top:0;left:0;right:0;z-index:99999;background:#F59E0B;color:#fff;text-align:center;padding:9px 16px;font-size:13px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.15);\">TEST OMGEVING — wijzigingen hier zijn NIET live in productie</div>'
+          html = re.sub(r'(<body[^>]*>)', lambda m: m.group(0) + b, html, 1)
+          open(f, 'w', encoding='utf-8').write(html)
+          print('TEST banner toegevoegd aan', f)
+          "
           fi
 
       - name: Setup Pages
