@@ -1803,6 +1803,8 @@ function processData(rows,fname){
   if(nieuw>0)saveStorage();
   pruneOrderMeta();
   saveStorage();
+  // Push nieuwe orders naar GitHub zodat collega's ze direct zien
+  if(typeof ghPushOrders==='function' && typeof ghIsConfigured==='function' && ghIsConfigured()) ghPushOrders();
   selIdx.clear();
   document.getElementById('topbar-status').textContent='Geladen: '+fname+(archived?' | '+archived+' gearchiveerd':'')+(nieuw?' | '+nieuw+' containers toegevoegd':'');
   ['nav-pub'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='flex';});
@@ -3777,11 +3779,10 @@ function openCPModalDatumPicker(triggerEl){
 const GH_CONFIG_KEY = 'gh_sync_config_v1';
 const GH_DATA_PATH  = 'data/planner.json';
 
-// Metadata-sleutels die via GitHub gesynchroniseerd worden.
-// allData (orders) komt altijd uit Excel en wordt NOOIT via GitHub overschreven.
+// Metadata-sleutels die via GitHub gesynchroniseerd worden (data/planner.json).
+// Orders (dp5_data) worden apart opgeslagen in data/orders.json via ghPushOrders().
 const GH_SYNC_KEYS = ['dp5_orig','dp5_heta','dp5_meta','dp5_bcom','dp5_blos',
                        'dp5_arch','dp5_cpcon','dp5_kgrp','dp5_cparch'];
-// dp5_data (allData) wordt NIET via GitHub gesynchroniseerd — die komt altijd vers van Excel-import.
 
 // ── Config ───────────────────────────────────────────────────────
 function ghGetConfig(){
@@ -3821,6 +3822,8 @@ function ghSetBtns(disabled){
 
 // ── GitHub API ────────────────────────────────────────────────────
 let _ghSha = null;
+const GH_ORDERS_PATH = 'data/orders.json';
+let _ghOrdersSha = null;
 
 async function ghApiGet(path){
   const c = ghGetConfig();
@@ -3855,14 +3858,14 @@ async function ghApiPut(path, data, sha){
   return resp.json();
 }
 
-// ── Verzamel lokale metadata (GEEN allData) ───────────────────────
+// ── Verzamel lokale metadata (GEEN orders — die gaan via ghPushOrders) ────────
 function ghCollectLocal(){
   const out = { _versie:'2.1', _datum:new Date().toISOString() };
   GH_SYNC_KEYS.forEach(function(k){ out[k] = localStorage.getItem(k)||''; });
   return out;
 }
 
-// ── Pas opgehaalde metadata toe — allData NOOIT aanraken ──────────
+// ── Pas opgehaalde metadata toe. Orders komen via ghSyncNow → dp5_data. ──────
 function ghApplyRemote(d){
   if(!d) return;
   // Tijdens apply: voorkom dat saveStorage-calls in render-paden
@@ -3943,13 +3946,30 @@ async function ghPushNow(){
   }
 }
 
-// ── PULL: GitHub → lokaal (alleen metadata, nooit allData) ────────
+// ── PUSH ORDERS: import → data/orders.json ───────────────────────
+async function ghPushOrders(){
+  if(!ghIsConfigured()) return;
+  try{
+    if(!_ghOrdersSha){
+      const existing = await ghApiGet(GH_ORDERS_PATH);
+      if(existing) _ghOrdersSha = existing.sha;
+    }
+    const payload = { _datum: new Date().toISOString(), orders: localStorage.getItem('dp5_data')||'[]' };
+    const result = await ghApiPut(GH_ORDERS_PATH, payload, _ghOrdersSha);
+    _ghOrdersSha = result.content?.sha || null;
+    ghSetStatus('ok','<strong>GitHub sync</strong> — orders opgeslagen ✓');
+  } catch(err){
+    ghSetStatus('error','❌ Orders opslaan mislukt: <strong>'+err.message+'</strong>');
+    console.error('[GitHub PushOrders]', err);
+  }
+}
+
+// ── PULL: GitHub → lokaal (metadata + orders) ─────────────────────
 async function ghSyncNow(){
   if(!ghIsConfigured()) return;
   if(window._ghPushing || window._ghPullActive) return;
-  // Belangrijk: als er lokaal nog ongepushte wijzigingen zijn (bv. import
-  // die net plaatsvond), NIET pullen — anders overschrijft verouderde
-  // remote-data de verse lokale staat. Push eerst, dan is alles in sync.
+  // Als er lokale ongepushte wijzigingen zijn (bv. import net gedaan),
+  // eerst pushen — anders overschrijft verouderde remote-data de verse staat.
   if(window._localDirty){
     return ghPushNow();
   }
@@ -3957,15 +3977,26 @@ async function ghSyncNow(){
   ghSetBtns(true);
   ghSetStatus('syncing','↻ Ophalen uit GitHub…');
   try{
-    const file = await ghApiGet(GH_DATA_PATH);
-    // Tijdens het toepassen mag saveStorage geen push triggeren.
-    if(file){
-      _ghSha = file.sha;
-      const decoded = decodeURIComponent(escape(atob(file.content.replace(/\n/g,''))));
-      // Tweede dirty-check vlak vóór apply: er kan tussen het netwerk-await
-      // door een import gestart zijn die saveStorage aanriep.
-      if(!window._localDirty){
-        ghApplyRemote(JSON.parse(decoded));
+    // Haal metadata en orders parallel op voor snelste laadtijd
+    const [metaFile, ordersFile] = await Promise.all([
+      ghApiGet(GH_DATA_PATH),
+      ghApiGet(GH_ORDERS_PATH)
+    ]);
+    // Tweede dirty-check vlak vóór apply: kan gewijzigd zijn tijdens het await
+    if(!window._localDirty){
+      // Orders eerst in localStorage zetten zodat loadStorage() in ghApplyRemote ze oppikt
+      if(ordersFile){
+        _ghOrdersSha = ordersFile.sha;
+        const od = JSON.parse(decodeURIComponent(escape(atob(ordersFile.content.replace(/\n/g,'')))));
+        if(od && od.orders && od.orders !== '[]') localStorage.setItem('dp5_data', od.orders);
+      }
+      // Metadata toepassen — roept loadStorage() aan die ook dp5_data meeneemt
+      if(metaFile){
+        _ghSha = metaFile.sha;
+        ghApplyRemote(JSON.parse(decodeURIComponent(escape(atob(metaFile.content.replace(/\n/g,''))))));
+      } else if(ordersFile){
+        // Alleen orders, geen metadata: herlaad en render via lege apply
+        ghApplyRemote({});
       }
     }
     const now = new Date().toISOString();
@@ -4000,7 +4031,7 @@ function ghSaveConfig(){
   const token = document.getElementById('gh-token').value.trim();
   if(!owner||!repo||!token){ alert('Vul alle velden in.'); return; }
   localStorage.setItem(GH_CONFIG_KEY, JSON.stringify({owner, repo, token}));
-  _ghSha = null;
+  _ghSha = null; _ghOrdersSha = null;
   ghCloseSettings();
   ghInitUI();
   ghSyncNow();
@@ -4008,7 +4039,7 @@ function ghSaveConfig(){
 function ghClearConfig(){
   if(!confirm('GitHub configuratie verwijderen?')) return;
   localStorage.removeItem(GH_CONFIG_KEY);
-  _ghSha = null;
+  _ghSha = null; _ghOrdersSha = null;
   ghCloseSettings();
   ghInitUI();
 }
