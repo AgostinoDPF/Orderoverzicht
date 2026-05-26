@@ -1763,8 +1763,8 @@ function processData(rows,fname){
       var key=okey(out);out._key=key;
       var meta=orderMeta[key]||{};
       out._comment=meta.comment||'';out._prio=meta.prio||'';out._hidden=meta.hidden||false;out._manual_lev=false;
-      // Als de import geen leverdatum heeft maar er is wel een handmatig ingevoerde datum → gebruik die
-      if(!out._lev_raw&&meta.leverdatum){out._lev_raw=pD(meta.leverdatum);out['Leverdatum Klant']=fmtD(meta.leverdatum);out._manual_lev=true;}
+      // Handmatige leverdatum heeft altijd prioriteit boven import
+      if(meta.leverdatum){out._lev_raw=pD(meta.leverdatum);out['Leverdatum Klant']=fmtD(meta.leverdatum);out._manual_lev=true;}
       out.dagenverschil=calcDagen(out._lev_raw,out._eta_raw);out.status=calcSt(out.dagenverschil,r['Klantnaam']);out.status_order=STO[out.status];
       // Auto-prioriteit: op-schema zonder handmatige prio → Laag
       if(out.status==='op-schema'&&!out._prio){
