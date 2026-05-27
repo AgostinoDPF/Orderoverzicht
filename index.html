@@ -853,10 +853,18 @@ sectie                            ║
   ╚══════════════════════════════════════════════════════════════════╝
 -->
 
-<!-- ═══════════════════════════════════════════════════
-     1. CSS — voeg toe in je <style> blok
-     ═══════════════════════════════════════════════════ -->
-<style id="github-sync-css">
+<!-- ── Server status CSS ── -->
+<style id="server-status-css">
+#srv-bar{background:var(--bg2);border-bottom:1px solid var(--border);padding:6px 20px;display:flex;align-items:center;gap:10px;font-size:11px;color:var(--text3);}
+#srv-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:background .3s;}
+#srv-dot.ok{background:#1A8754;animation:srvpulse 3s infinite;}
+#srv-dot.err{background:#B23A33;}
+#srv-dot.sync{background:#A85A12;animation:srvpulse .8s infinite;}
+@keyframes srvpulse{0%,100%{opacity:1}50%{opacity:.35}}
+#srv-bar span{opacity:.8;}
+#srv-bar strong{color:var(--text2);}
+</style>
+
 /* ── GITHUB SYNC BANNER ──────────────────────────────── */
 #gh-sync-bar{
   background:var(--surface);
