@@ -2441,13 +2441,13 @@ function renderBoats(){
       else if(bo.daysUntil<=7)aankomst='<span style="color:#A85A12;font-weight:500;">'+bo.daysUntil+' d</span>';
       else aankomst='<span style="color:var(--text2)">'+bo.daysUntil+' d</span>';
       var origCell=bo.origFmt
-        ?bo.origFmt+' <button class="btn btn-ghost btn-sm" onclick="openOrig(''+b.replace(/'/g,"\\'")+'')">&#9998;</button>'
-        :'<button class="btn btn-ghost btn-sm" onclick="openOrig(''+b.replace(/'/g,"\\'")+'')">+ Instellen</button>';
+        ?bo.origFmt+' <button class="btn btn-ghost btn-sm" onclick="openOrig(\''+b.replace(/'/g,"\\'")+'\')">&#9998;</button>'
+        :'<button class="btn btn-ghost btn-sm" onclick="openOrig(\''+b.replace(/'/g,"\\'")+'\')">+ Instellen</button>';
       var etaCell=(bo.etaFmt||'—')+(bo.importedEta?' <span style="font-size:10px;color:#1A8754;" title="Via ETA import">↑</span>':'');
-      var losCel='<input class="los-inp" type="number" min="0" max="30" value="'+(boatLos[b]||'')+'" placeholder="—" style="width:44px;" onchange="saveBoatLos(''+b.replace(/'/g,"\\'")+'',this.value)" oninput="updateLosRes(''+b.replace(/'/g,"\\'")+'',this.value,''+resId+'')">'
+      var losCel='<input class="los-inp" type="number" min="0" max="30" value="'+(boatLos[b]||'')+'" placeholder="—" style="width:44px;" onchange="saveBoatLos(\''+b.replace(/'/g,"\\'")+'\',this.value)" oninput="updateLosRes(\''+b.replace(/'/g,"\\'")+'\',this.value,\''+resId+'\')">'
         +'<span id="'+resId+'" style="font-size:12px;color:var(--text3);margin-left:4px;">'+(losN&&losDate?'→ '+losDate:'')+'</span>';
       var commentVal=(boatComments[b]||'').replace(/"/g,'&quot;');
-      var commentEl='<input type="text" style="width:100%;min-width:100px;background:transparent;border:none;border-bottom:1px solid transparent;padding:2px 0;font-size:12px;color:var(--text2);font-family:var(--font);outline:none;" placeholder="Notitie…" value="'+commentVal+'" onchange="saveBoatComment(''+b.replace(/'/g,"\\'")+'',this.value)" onfocus="this.style.borderBottomColor='var(--accent)'" onblur="this.style.borderBottomColor='transparent'">';
+      var commentEl='<input type="text" style="width:100%;min-width:100px;background:transparent;border:none;border-bottom:1px solid transparent;padding:2px 0;font-size:12px;color:var(--text2);font-family:var(--font);outline:none;" placeholder="Notitie…" value="'+commentVal+'" onchange="saveBoatComment(\''+b.replace(/'/g,"\\'")+'\',this.value)" onfocus="this.style.borderBottomColor=\'var(--accent)\'" onblur="this.style.borderBottomColor=\'transparent\'">';
       h+='<tr>'
         +'<td style="padding-left:18px;"><div style="font-weight:600;color:var(--text);font-size:13.5px;">'+b+'</div><div style="font-size:11px;color:var(--text3);">'+bo.orders+' order'+(bo.orders!==1?'s':'')+'</div></td>'
         +'<td><span class="badge '+statusClass+'">'+statusLabel+'</span></td>'
@@ -2499,7 +2499,7 @@ function renderBoats(){
     var circle=allPl?'<div class="week-circle done">&#10003;</div>':(urgent?'<div class="week-circle urgent">!</div>':'<div class="week-circle todo">'+(bw.totalC-bw.plannedC)+'</div>');
     var losN2=parseInt(boatLos[bw.boot]||0);
     var losStr='';if(losN2&&bw.eta){var ld2=addDays(bw.eta,losN2);losStr=' · Lossen '+ld2.getDate()+' '+MNS[ld2.getMonth()];}
-    wh+='<div class="week-item'+(allPl?' done':'')+'" onclick="showTab('cp',null)">'
+    wh+='<div class="week-item'+(allPl?' done':'')+'" onclick="showTab(\'cp\',null)">'
       +circle+'<div class="week-body"><div class="week-item-title">'+bw.boot+'</div>'
       +'<div class="week-item-desc">'+dayLbl+losStr+'</div>'
       +'<div class="week-item-desc">'+(allPl?bw.totalC+' containers gepland':bw.plannedC+'/'+bw.totalC+' containers gepland')+'</div>'
